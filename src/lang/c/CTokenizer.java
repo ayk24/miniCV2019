@@ -62,6 +62,13 @@ public class CTokenizer extends Tokenizer<CToken, CParseContext> {
 		return currentTk;
 	}
 
+
+	// startCol = colNo-1; については, readChar()が呼ばれた後に,
+	// 別の状態に遷移するんだったら, 書く必要がありそう...
+	// なんというか, ひとかたまり終えたら書く必要ある感
+	// ただ読まなかったことにする際にはbackChar()内でやってくれるので,
+	// 書く必要はなし.
+
 	private CToken readToken() {
 		CToken tk = null;
 		char ch;
@@ -139,7 +146,7 @@ public class CTokenizer extends Tokenizer<CToken, CParseContext> {
 				if (ch == '/'){		// '//'のとき
 					state = 7;
 				} else if (ch == '*') {	// '/*'のとき
-//					startCol = colNo - 1;
+					startCol = colNo - 1;
 					state = 8;
 				} else if (ch == (char) -1) {
 					backChar(ch);
