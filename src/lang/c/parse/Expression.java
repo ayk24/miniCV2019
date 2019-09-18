@@ -10,14 +10,16 @@ import lang.c.CTokenizer;
 import lang.c.CType;
 
 public class Expression extends CParseRule {
-	// expression ::= term { expressionAdd }
+	// expression ::= term { expressionAdd | expressionSub }
 	private CParseRule expression;
 
 	public Expression(CParseContext pcx) {
 	}
+
 	public static boolean isFirst(CToken tk) {
 		return Term.isFirst(tk);
 	}
+
 	public void parse(CParseContext pcx) throws FatalErrorException {
 		// ここにやってくるときは、必ずisFirst()が満たされている
 		CParseRule term = null, list = null;
@@ -81,9 +83,10 @@ class ExpressionAdd extends CParseRule {
 	public void semanticCheck(CParseContext pcx) throws FatalErrorException {
 		// 足し算の型計算規則
 		final int s[][] = {
-				//		T_err			T_int
-				{	CType.T_err,	CType.T_err },	// T_err
-				{	CType.T_err,	CType.T_int },	// T_int
+				//		T_err			T_int			T_pint
+				{	CType.T_err,	CType.T_err,	CType.T_err},	// T_err
+				{	CType.T_err,	CType.T_int,	CType.T_pint},	// T_int
+				{	CType.T_err,	CType.T_pint,	CType.T_err},	// T_pint
 		};
 		if (left != null && right != null) {
 			left.semanticCheck(pcx);
@@ -106,7 +109,7 @@ class ExpressionAdd extends CParseRule {
 			right.codeGen(pcx);		// 右部分木のコード生成を頼む
 			o.println("\tMOV\t-(R6), R0\t; ExpressionAdd: ２数を取り出して、足し、積む<" + op.toString() + ">");
 			o.println("\tMOV\t-(R6), R1\t; ExpressionAdd:");
-			o.println("\tADD\tR1, R0\t; ExpressionAdd:");
+			o.println("\tADD\tR1, R0\t\t; ExpressionAdd:");
 			o.println("\tMOV\tR0, (R6)+\t; ExpressionAdd:");
 		}
 	}
@@ -139,10 +142,12 @@ class ExpressionSub extends CParseRule {
 	public void semanticCheck(CParseContext pcx) throws FatalErrorException {
 		// 引き算の型計算規則
 		final int s[][] = {
-		//		T_err			T_int
-			{	CType.T_err,	CType.T_err },	// T_err
-			{	CType.T_err,	CType.T_int },	// T_int
+				//		T_err			T_int			T_pint
+				{	CType.T_err,	CType.T_err,	CType.T_err	 },	// T_err
+				{	CType.T_err,	CType.T_int,	CType.T_err },	// T_int
+				{	CType.T_err,	CType.T_pint,	CType.T_int	 }	// T_pint
 		};
+
 		if (left != null && right != null) {
 			left.semanticCheck(pcx);
 			right.semanticCheck(pcx);
@@ -162,10 +167,10 @@ class ExpressionSub extends CParseRule {
 		if (left != null && right != null) {
 			left.codeGen(pcx);		// 左部分木のコード生成を頼む
 			right.codeGen(pcx);		// 右部分木のコード生成を頼む
-			o.println("\tMOV\t-(R6), R0\t; ExpressionSub: ２数を取り出して、引き、積む<" + op.toString() + ">");
-			o.println("\tMOV\t-(R6), R1\t; ExpressionSub:");
-			o.println("\tSUB\tR0, R1\t; ExpressionSub:");
-			o.println("\tMOV\tR1, (R6)+\t; ExpressionSub:");
+			o.println("\tMOV\t-(R6), R1\t; ExpressionSub: ２数を取り出して、引き、積む<" + op.toString() + ">");
+			o.println("\tMOV\t-(R6), R0\t; ExpressionSub:");
+			o.println("\tSUB\tR1, R0\t\t; ExpressionSub:");
+			o.println("\tMOV\tR0, (R6)+\t; ExpressionSub:");
 		}
 	}
 }
