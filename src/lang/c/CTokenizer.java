@@ -39,6 +39,7 @@ public class CTokenizer extends Tokenizer<CToken, CParseContext> {
 //		System.out.print("'"+ch+"'("+(int)ch+")");
 		return ch;
 	}
+
 	private void backChar(char c) {
 		backCh = c;
 		backChExist = true;
@@ -138,7 +139,7 @@ public class CTokenizer extends Tokenizer<CToken, CParseContext> {
 				if (ch == '/'){		// '//'のとき
 					state = 7;
 				} else if (ch == '*') {	// '/*'のとき
-					startCol = colNo - 1;
+//					startCol = colNo - 1;
 					state = 8;
 				} else if (ch == (char) -1) {
 					backChar(ch);
