@@ -88,10 +88,11 @@ public class CTokenizer extends Tokenizer<CToken, CParseContext> {
 			case 0:					// 初期状態
 				ch = readChar();
 				if (ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r') {
+
 				} else if (ch == (char) -1) {	// EOF
 					startCol = colNo - 1;
 					state = 1;
-				} else if (ch >= '0' && ch <= '9') {
+				} else if (ch >= '1' && ch <= '9') {
 					startCol = colNo - 1;
 					text.append(ch);
 					state = 3;
@@ -105,12 +106,18 @@ public class CTokenizer extends Tokenizer<CToken, CParseContext> {
 					state = 5;
 				} else if (ch == '/') {
 					startCol = colNo - 1;
-//					System.out.println(text);
 					state = 6;
+				} else if (ch == '&') {
+					startCol = colNo - 1;
+					text.append(ch);
+					state = 10;
+				} else if (ch == '0') {
+					startCol = colNo - 1;
+					text.append(ch);
+					state = 12;
 				} else {			// ヘンな文字を読んだ
 					startCol = colNo - 1;
 					text.append(ch);
-//					System.out.println(text);
 					state = 2;
 				}
 				break;
@@ -132,8 +139,7 @@ public class CTokenizer extends Tokenizer<CToken, CParseContext> {
 				} else {
 					// 数の終わり
 					backChar(ch);	// 数を表さない文字は戻す（読まなかったことにする）
-					tk = new CToken(CToken.TK_NUM, lineNo, startCol, text.toString());
-					accept = true;
+					state = 11;
 				}
 				break;
 
@@ -152,6 +158,7 @@ public class CTokenizer extends Tokenizer<CToken, CParseContext> {
 				if (ch == '/'){		// '//'のとき
 					state = 7;
 				} else if (ch == '*') {	// '/*'のとき
+					// '/*'でひとかたまりとして見るため, 以下1文の処理が必要.
 					startCol = colNo - 1;
 					state = 8;
 				} else if (ch == (char) -1) {
@@ -197,7 +204,72 @@ public class CTokenizer extends Tokenizer<CToken, CParseContext> {
 				}
 				break;
 
+			case 10:	// &
+				tk = new CToken(CToken.TK_AMP, lineNo, startCol, "&");
+				accept = true;
+				break;
+
+			case 11:	// '数の終わり'かどうかを確認する
+				try {
+					if(Integer.decode(text.toString()) <= 0xFFFF) {
+						tk = new CToken(CToken.TK_NUM, lineNo, startCol, text.toString());
+						accept = true;
+					} else {
+						state = 2;
+					}
+				} catch(Exception e) {
+					state = 2;
+				}
+				break;
+
+			case 12:					// '0'から始まる数字がどんな種類のものか分類する
+				ch = readChar();
+				if (ch >= '0' && ch <= '7') { 	// 8進数の処理状態へ遷移する
+					text.append(ch);
+					state = 13;
+				} else if (ch == 'x') {			// '0x'まで読んだ
+					text.append(ch);
+					state = 14;
+				} else {
+					backChar(ch);				// 数を表さない文字は戻す（読まなかったことにする）
+					state = 11;
+				}
+				break;
+
+			case 13:					// 8進数の処理
+				ch = readChar();
+				if (ch >= '0' && ch <= '7') {
+					text.append(ch);
+				}
+				else if(ch >= '8' && ch <= '9') {	// 8や9が来たら, 不正
+					state = 2;
+				} else {
+					backChar(ch);					// 数を表さない文字は戻す（読まなかったことにする）
+					state = 11;
+				}
+				break;
+
+			case 14:					// 16進数の処理状態へ遷移する
+				ch = readChar();
+				if (ch >= '0' && ch <= '9' || ch >= 'a' && ch <= 'f' || ch >= 'A' && ch <= 'F') {
+					text.append(ch);
+				} else {
+					state = 2;
+				}
+				break;
+
+			case 15:					// 16進数の処理
+				ch = readChar();
+				if (ch >= '0' && ch <= '9' || ch >= 'a' && ch <= 'f' || ch >= 'A' && ch <= 'F') {
+					text.append(ch);
+				} else {
+					backChar(ch);		// 数を表さない文字は戻す（読まなかったことにする）
+					state = 11;
+				}
+				break;
+
 			}
+
 		}
 		return tk;
 	}
