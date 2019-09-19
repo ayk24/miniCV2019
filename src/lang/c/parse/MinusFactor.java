@@ -41,7 +41,7 @@ public class MinusFactor extends CParseRule {
 			setConstant(unsignedfactor.isConstant());
 
 			if(unsignedfactor.getCType().getType() == CType.T_pint){
-				pcx.fatalError("ポインタに'-'は付けられません.");
+				pcx.fatalError("右辺の型[int*]に'-'は付けられません.");
 			}
 		}
 	}
@@ -51,6 +51,7 @@ public class MinusFactor extends CParseRule {
 		o.println(";;; minusfactor starts");
 		if(unsignedfactor != null){ unsignedfactor.codeGen(pcx); }
 
+		// 符号の変換
 		// スタックトップから値を取り出し,
 		// その値を0から引いた結果をスタックに積む.
 
