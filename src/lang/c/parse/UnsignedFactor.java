@@ -10,18 +10,21 @@ import lang.c.CTokenizer;
 
 public class UnsignedFactor extends CParseRule {
 
-	// unsignedFactor ::= factorAmp | number | LPAR expression RPAR
-
+	// unsignedFactor ::= factorAmp | number | LPAR expression RPAR | addressToValue
 
 	private CParseRule factoramp;
 	private CParseRule number;
 	private CParseRule expression;
+	private CParseRule addressToValue;
 
 	public UnsignedFactor(CParseContext pcx) {
 	}
+
 	public static boolean isFirst(CToken tk) {
-		return Number.isFirst(tk) || FactorAmp.isFirst(tk) || tk.getType() == CToken.TK_LPAR;
+		return Number.isFirst(tk) || FactorAmp.isFirst(tk) ||
+				tk.getType() == CToken.TK_LPAR || AddressToValue.isFirst(tk);
 	}
+
 	public void parse(CParseContext pcx) throws FatalErrorException {
 		// ここにやってくるときは、必ずisFirst()が満たされている
 		CTokenizer ct = pcx.getTokenizer();
@@ -44,6 +47,10 @@ public class UnsignedFactor extends CParseRule {
 			}
 
 			tk = ct.getNextToken(pcx);
+
+		} else if (AddressToValue.isFirst(tk)) {
+            addressToValue = new AddressToValue(pcx);
+            addressToValue.parse(pcx);
 		}
 	}
 
@@ -56,14 +63,20 @@ public class UnsignedFactor extends CParseRule {
 
 		if (factoramp != null){
 			factoramp.semanticCheck(pcx);
-			setCType(factoramp.getCType());				// amp の型をそのままコピー
-			setConstant(factoramp.isConstant());			// amp は常に定数
+			setCType(factoramp.getCType());				// factoramp の型をそのままコピー
+			setConstant(factoramp.isConstant());		// factoramp は常に定数
 		}
 
 		if (expression != null){
 			expression.semanticCheck(pcx);
-			setCType(expression.getCType());		// expresssion の型をそのままコピー
-			setConstant(expression.isConstant());	// expresssion は常に定数
+			setCType(expression.getCType());			// expresssion の型をそのままコピー
+			setConstant(expression.isConstant());		// expresssion は常に定数
+		}
+
+		if (addressToValue != null){
+			addressToValue.semanticCheck(pcx);
+			setCType(addressToValue.getCType());		// addressToValue の型をそのままコピー
+			setConstant(addressToValue.isConstant());	// addressToValue は常に定数
 		}
 	}
 
@@ -73,6 +86,7 @@ public class UnsignedFactor extends CParseRule {
 		if (number != null) { number.codeGen(pcx); }
 		if (factoramp != null) { factoramp.codeGen(pcx); }
 		if (expression != null) { expression.codeGen(pcx); }
+		if (addressToValue != null) { addressToValue.codeGen(pcx); }
 		o.println(";;; unsignedfactor completes");
 	}
 }

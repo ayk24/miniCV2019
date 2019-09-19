@@ -1,10 +1,11 @@
 package lang.c;
 
-import lang.*;
+import lang.FatalErrorException;
+import lang.IOContext;
 
 public class TestCToken {
 	private static class TestTokenizer extends CParseRule {
-//		program  ::= { token } EOF
+		//		program  ::= { token } EOF
 		public TestTokenizer(CParseContext pcx) {}
 		public static boolean isFirst(CToken tk) { return true; }
 

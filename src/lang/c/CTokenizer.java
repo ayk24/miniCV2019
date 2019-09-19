@@ -124,6 +124,18 @@ public class CTokenizer extends Tokenizer<CToken, CParseContext> {
 				} else if (ch == ')') {
 					startCol = colNo - 1;
 					state = 18;
+				} else if (ch == '[') {
+					startCol = colNo - 1;
+					text.append(ch);
+					state = 20;
+				} else if (ch == ']') {
+					startCol = colNo - 1;
+					text.append(ch);
+					state = 21;
+				} else if (ch >= 'a' && ch <= 'z' || ch >= 'A' && ch <= 'Z') {
+					startCol = colNo - 1;
+					text.append(ch);
+					state = 22;
 				} else {			// ヘンな文字を読んだ
 					startCol = colNo - 1;
 					text.append(ch);
@@ -298,6 +310,28 @@ public class CTokenizer extends Tokenizer<CToken, CParseContext> {
 			case 19:					// '/'を読んだ
 				tk = new CToken(CToken.TK_DIV, lineNo, startCol, "/");
 				accept = true;
+				break;
+
+			case 20:					// [ を読んだ
+				tk = new CToken(CToken.TK_LBRA, lineNo, startCol, "[");
+				accept = true;
+				break;
+
+			case 21:					// ] を読んだ
+				tk = new CToken(CToken.TK_RBRA, lineNo, startCol, "]");
+				accept = true;
+				break;
+
+			case 22:					// ident を読んだ
+				ch = readChar();
+				if (ch >= '0' && ch <= '9' || ch >= 'a' && ch <= 'z' || ch >= 'A' && ch <= 'Z') {
+					text.append(ch);
+				}else {
+					// ident の終わり
+					backChar(ch);		// identを表さない文字は戻す(読まなかったことにする)
+					tk = new CToken(CToken.TK_IDENT, lineNo, startCol, text.toString());
+					accept = true;
+				}
 				break;
 
 			}
