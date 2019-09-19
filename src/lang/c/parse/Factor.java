@@ -10,17 +10,17 @@ import lang.c.CTokenizer;
 
 public class Factor extends CParseRule {
 
-	// factor ::= factorAmp | number
-	// factorAmp ::= AMP number
+	// factor ::= plusFactor | minusFactor | unsignedFactor
 
-	private CParseRule number;
-	private CParseRule amp;
+	private CParseRule plusfactor;
+	private CParseRule minusfactor;
+	private CParseRule unsignedfactor;
 
 	public Factor(CParseContext pcx) {
 	}
 
 	public static boolean isFirst(CToken tk) {
-		return Number.isFirst(tk) || FactorAmp.isFirst(tk);
+		return PlusFactor.isFirst(tk) || MinusFactor.isFirst(tk) || UnsignedFactor.isFirst(tk);
 	}
 
 	public void parse(CParseContext pcx) throws FatalErrorException {
@@ -28,34 +28,42 @@ public class Factor extends CParseRule {
 		CTokenizer ct = pcx.getTokenizer();
 		CToken tk = ct.getCurrentToken(pcx);
 
-		if(Number.isFirst(tk)){
-			number = new Number(pcx);
-			number.parse(pcx);
-		}else if(FactorAmp.isFirst(tk)){
-			amp = new FactorAmp(pcx);
-			amp.parse(pcx);
+		if(PlusFactor.isFirst(tk)){
+			plusfactor = new PlusFactor(pcx);
+			plusfactor.parse(pcx);
+		} else if(MinusFactor.isFirst(tk)) {
+			minusfactor = new MinusFactor(pcx);
+			minusfactor.parse(pcx);
+		} else if(UnsignedFactor.isFirst(tk)){
+			unsignedfactor = new UnsignedFactor(pcx);
+			unsignedfactor.parse(pcx);
 		}
 	}
 
 	public void semanticCheck(CParseContext pcx) throws FatalErrorException {
-		if (number != null) {
-			number.semanticCheck(pcx);
-			setCType(number.getCType());		// number の型をそのままコピー
-			setConstant(number.isConstant());	// number は常に定数
+		if (plusfactor != null) {
+			plusfactor.semanticCheck(pcx);
+			setCType(plusfactor.getCType());			// plusfactor の型をそのままコピー
+			setConstant(plusfactor.isConstant());		// plusfactor は常に定数
 		}
-
-		if(amp != null) {
-			amp.semanticCheck(pcx);
-			setCType(amp.getCType());		// amp の型をそのままコピー
-			setConstant(amp.isConstant());	// amp は常に定数
+		if (minusfactor != null){
+			minusfactor.semanticCheck(pcx);
+			setCType(minusfactor.getCType());			// minusfactor の型をそのままコピー
+			setConstant(minusfactor.isConstant());		// minusfactor は常に定数
+		}
+		if (unsignedfactor != null){
+			unsignedfactor.semanticCheck(pcx);
+			setCType(unsignedfactor.getCType());		// unsignedfactor の型をそのままコピー
+			setConstant(unsignedfactor.isConstant());	// unsignedfactor は常に定数
 		}
 	}
 
 	public void codeGen(CParseContext pcx) throws FatalErrorException {
 		PrintStream o = pcx.getIOContext().getOutStream();
 		o.println(";;; factor starts");
-		if (number != null) { number.codeGen(pcx); }
-		if (amp != null) { amp.codeGen(pcx); }
+		if (plusfactor != null) { plusfactor.codeGen(pcx); }
+		if (minusfactor != null) {minusfactor.codeGen(pcx); }
+		if (unsignedfactor != null) {unsignedfactor.codeGen(pcx); }
 		o.println(";;; factor completes");
 	}
 }

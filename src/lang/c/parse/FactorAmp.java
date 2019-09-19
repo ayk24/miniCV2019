@@ -10,6 +10,7 @@ import lang.c.CTokenizer;
 import lang.c.CType;
 
 public class FactorAmp extends CParseRule {
+
 	// factorAmp ::= AMP number
 
 	private CParseRule number;
@@ -22,6 +23,7 @@ public class FactorAmp extends CParseRule {
 	}
 
 	public void parse(CParseContext pcx) throws FatalErrorException {
+		// ここにやってくるときは、必ずisFirst()が満たされている
 		CTokenizer ct = pcx.getTokenizer();
         CToken tk = ct.getNextToken(pcx);
 
@@ -41,7 +43,6 @@ public class FactorAmp extends CParseRule {
 		}
 	}
 
-	@Override
 	public void codeGen(CParseContext pcx) throws FatalErrorException {
 		PrintStream o = pcx.getIOContext().getOutStream();
 		o.println(";;; factorAmp starts");

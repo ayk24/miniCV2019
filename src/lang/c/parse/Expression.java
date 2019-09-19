@@ -10,7 +10,9 @@ import lang.c.CTokenizer;
 import lang.c.CType;
 
 public class Expression extends CParseRule {
+
 	// expression ::= term { expressionAdd | expressionSub }
+
 	private CParseRule expression;
 
 	public Expression(CParseContext pcx) {
@@ -23,10 +25,13 @@ public class Expression extends CParseRule {
 	public void parse(CParseContext pcx) throws FatalErrorException {
 		// ここにやってくるときは、必ずisFirst()が満たされている
 		CParseRule term = null, list = null;
+
 		term = new Term(pcx);
 		term.parse(pcx);
+
 		CTokenizer ct = pcx.getTokenizer();
 		CToken tk = ct.getCurrentToken(pcx);
+
 		while (ExpressionAdd.isFirst(tk) || ExpressionSub.isFirst(tk)) {
 			if (ExpressionAdd.isFirst(tk)) {
 				list = new ExpressionAdd(pcx, term);
@@ -116,7 +121,9 @@ class ExpressionAdd extends CParseRule {
 }
 
 class ExpressionSub extends CParseRule {
+
 	// expressionSub ::= '-' term
+
 	private CToken op;
 	private CParseRule left, right;
 	public ExpressionSub(CParseContext pcx, CParseRule left) {

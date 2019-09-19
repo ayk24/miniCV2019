@@ -197,7 +197,7 @@ public class CTokenizer extends Tokenizer<CToken, CParseContext> {
 					// コメント内部のEOFは不正とする
 					backChar(ch);
 					state = 2;
-					System.err.println("ERROR : EOF in Comment Line.");
+					System.err.println("ERROR : EOF in Comment Line.<case 8>");
 				}
 				break;
 
@@ -209,7 +209,7 @@ public class CTokenizer extends Tokenizer<CToken, CParseContext> {
 					// コメント内部のEOFは不正とする
 					backChar(ch);
 					state = 2;
-					System.err.println("ERROR : EOF in Comment Line.");
+					System.err.println("ERROR : EOF in Comment Line.<case 9>");
 				}else if(ch == '*') {
 				}else{
 					state = 8;
