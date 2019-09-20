@@ -51,6 +51,7 @@ public class StatementAssign extends CParseRule {
 		}
 
 		tk = ct.getNextToken(pcx);
+
 	}
 
 	public void semanticCheck(CParseContext pcx) throws FatalErrorException {
@@ -66,10 +67,6 @@ public class StatementAssign extends CParseRule {
 			this.setCType(expression.getCType());
 			this.setConstant(expression.isConstant());
 		}
-
-		// debug
-		// System.out.println(primary.getCType());
-		// System.out.println(expression.getCType());
 
 		if(primary.getCType() != expression.getCType()){
 			pcx.fatalError("左辺と右辺の型が一致していません");

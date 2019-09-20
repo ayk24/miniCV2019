@@ -144,6 +144,10 @@ public class CTokenizer extends Tokenizer<CToken, CParseContext> {
 					startCol = colNo - 1;
 					text.append(ch);
 					state = 24;
+				} else if (ch == ',') {
+					startCol = colNo - 1;
+					text.append(ch);
+					state = 25;
 				} else {			// ヘンな文字を読んだ
 					startCol = colNo - 1;
 					text.append(ch);
@@ -337,7 +341,9 @@ public class CTokenizer extends Tokenizer<CToken, CParseContext> {
 				}else {
 					// ident の終わり
 					backChar(ch);		// identを表さない文字は戻す(読まなかったことにする)
-					tk = new CToken(CToken.TK_IDENT, lineNo, startCol, text.toString());
+					String s = text.toString();
+					Integer i = (Integer) rule.get(s);
+					tk = new CToken(((i == null) ? CToken.TK_IDENT : i.intValue()), lineNo, startCol, text.toString());
 					accept = true;
 				}
 				break;
@@ -352,7 +358,11 @@ public class CTokenizer extends Tokenizer<CToken, CParseContext> {
 				accept = true;
 				break;
 
-			}
+			case 25:					// , を読んだ
+				tk = new CToken(CToken.TK_COMMA, lineNo, startCol, ",");
+				accept = true;
+				break;
+				}
 		}
 		return tk;
 	}

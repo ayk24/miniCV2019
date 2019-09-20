@@ -5,15 +5,16 @@ import java.io.PrintStream;
 import lang.FatalErrorException;
 import lang.c.CParseContext;
 import lang.c.CParseRule;
+import lang.c.CSymbolTableEntry;
 import lang.c.CToken;
 import lang.c.CTokenizer;
-import lang.c.CType;
 
 public class Ident extends CParseRule{
 
     // Ident ::= IDENT
 
 	private CToken ident;
+    private CSymbolTableEntry cSymbolTableEntry;
 
     public Ident(CParseContext pcx) {
     }
@@ -26,13 +27,18 @@ public class Ident extends CParseRule{
         CTokenizer ct = pcx.getTokenizer();
         CToken tk = ct.getCurrentToken(pcx);
         ident = tk;
+
+        cSymbolTableEntry = pcx.getTable().checkTable(ident.getText());
+        if (cSymbolTableEntry == null) {
+            pcx.fatalError(tk.toExplainString() + "宣言されていません.");
+        }
         tk = ct.getNextToken(pcx);
     }
 
     public void semanticCheck(CParseContext pcx) throws FatalErrorException {
-    	// 以下の一文を適切に書き換える.
-        this.setCType(CType.getCType(CType.T_int));
-        this.setConstant(true);
+    	// 記号表を利用する.
+		this.setCType(cSymbolTableEntry.getType());
+		this.setConstant(cSymbolTableEntry.isConstp());
     }
 
     public void codeGen(CParseContext pcx) throws FatalErrorException {
