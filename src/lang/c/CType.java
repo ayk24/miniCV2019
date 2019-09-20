@@ -11,8 +11,8 @@ public class CType {
 		new CType(T_err,	"error"),
 		new CType(T_int,	"int"),
 		new CType(T_pint,	"int*"),
-		new CType(T_iarray,"int[]"),
-		new CType(T_parray,"int*[]"),
+		new CType(T_iarray, "int[]"),
+		new CType(T_parray, "int*[]"),
 	};
 
 	private int type;
@@ -22,9 +22,11 @@ public class CType {
 		this.type = type;
 		this.string = s;
 	}
+
 	public static CType getCType(int type) {
 		return typeArray[type];
 	}
+
 	public boolean isCType(int t)	{ return t == type; }
 	public int getType()			{ return type; }
 	public String toString()		{ return string; }

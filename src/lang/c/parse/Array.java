@@ -32,9 +32,9 @@ public class Array extends CParseRule {
 			expression.parse(pcx);
 
 			tk = ct.getCurrentToken(pcx);
+
 			if(tk.getType() != CToken.TK_RBRA) {
 				pcx.fatalError("']'がありません.");
-
 			}
 			tk = ct.getNextToken(pcx);
 		}
@@ -45,7 +45,7 @@ public class Array extends CParseRule {
 			expression.semanticCheck(pcx);
 
 			if(expression.getCType() != CType.getCType(CType.T_int)){
-				pcx.fatalError("[]の添え字はintでなければいけません.");
+				pcx.fatalError("[]内は整数型ででなければいけません.");
 			}
 
 			this.setCType(expression.getCType());

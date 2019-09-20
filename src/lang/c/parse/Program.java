@@ -1,6 +1,7 @@
 package lang.c.parse;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 
 import lang.FatalErrorException;
 import lang.c.CParseContext;
@@ -9,27 +10,41 @@ import lang.c.CToken;
 import lang.c.CTokenizer;
 
 public class Program extends CParseRule {
-	// program ::= expression EOF
-	private CParseRule program;
+
+	// program ::= { statement } EOF
+
+	private CParseRule statement;
+	private ArrayList<CParseRule> statementList;
 
 	public Program(CParseContext pcx) {
+		statementList = new ArrayList<CParseRule>();
 	}
+
 	public static boolean isFirst(CToken tk) {
-		return Expression.isFirst(tk);
+		return Statement.isFirst(tk);
 	}
+
 	public void parse(CParseContext pcx) throws FatalErrorException {
 		// ここにやってくるときは、必ずisFirst()が満たされている
-		program = new Expression(pcx);
-		program.parse(pcx);
 		CTokenizer ct = pcx.getTokenizer();
 		CToken tk = ct.getCurrentToken(pcx);
+
+		while(Statement.isFirst(tk)) {
+			statement = new Statement(pcx);
+			statement.parse(pcx);
+			statementList.add(statement);
+			tk = ct.getCurrentToken(pcx);
+		}
+
 		if (tk.getType() != CToken.TK_EOF) {
 			pcx.fatalError(tk.toExplainString() + "プログラムの最後にゴミがあります");
 		}
 	}
 
 	public void semanticCheck(CParseContext pcx) throws FatalErrorException {
-		if (program != null) { program.semanticCheck(pcx); }
+		for (CParseRule statement : statementList) {
+			if (statement != null) { statement.semanticCheck(pcx); }
+		}
 	}
 
 	public void codeGen(CParseContext pcx) throws FatalErrorException {
@@ -38,10 +53,12 @@ public class Program extends CParseRule {
 		o.println("\t. = 0x100");
 		o.println("\tJMP\t__START\t\t; ProgramNode: 最初の実行文へ");
 		// ここには将来、宣言に対するコード生成が必要
-		if (program != null) {
+		if (statement != null) {
 			o.println("__START:");
 			o.println("\tMOV\t#0x1000, R6\t; ProgramNode: 計算用スタック初期化");
-			program.codeGen(pcx);
+			for (CParseRule program : statementList) {
+				program.codeGen(pcx);
+			}
 			o.println("\tMOV\t-(R6), R0\t; ProgramNode: 計算結果確認用");
 		}
 		o.println("\tHLT\t\t\t\t; ProgramNode:");

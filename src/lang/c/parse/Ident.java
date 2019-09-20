@@ -30,8 +30,9 @@ public class Ident extends CParseRule{
     }
 
     public void semanticCheck(CParseContext pcx) throws FatalErrorException {
-        this.setCType(CType.getCType(CType.T_parray));
-        this.setConstant(false);
+    	// 以下の一文を適切に書き換える.
+        this.setCType(CType.getCType(CType.T_int));
+        this.setConstant(true);
     }
 
     public void codeGen(CParseContext pcx) throws FatalErrorException {

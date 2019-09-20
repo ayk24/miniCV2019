@@ -36,7 +36,7 @@ public class CTokenizer extends Tokenizer<CToken, CParseContext> {
 		}
 		++colNo;
 		if (ch == '\n')  { colNo = 1; ++lineNo; }
-//		System.out.print("'"+ch+"'("+(int)ch+")");
+		//		System.out.print("'"+ch+"'("+(int)ch+")");
 		return ch;
 	}
 
@@ -58,7 +58,7 @@ public class CTokenizer extends Tokenizer<CToken, CParseContext> {
 		in = pctx.getIOContext().getInStream();
 		err = pctx.getIOContext().getErrStream();
 		currentTk = readToken();
-//		System.out.println("Token='" + currentTk.toString());
+		//		System.out.println("Token='" + currentTk.toString());
 		return currentTk;
 	}
 
@@ -66,7 +66,7 @@ public class CTokenizer extends Tokenizer<CToken, CParseContext> {
 	// 課題1での疑問点
 	// startCol = colNo-1; ･･･(*) については, readChar()が呼ばれた後に行っている.
 
-	// 新たなひとかたまりを始める書く必要ある感
+	// 新たなひとかたまりを始める書く必要ある感(終端記号の後)
 	// 例えば, 数なら 数字を読む前に(*)を行い, 終わったら, state=0に遷移し,
 	// そこで新たな種類の文字を読む際に, readChar()後, 再び(*)を行う.
 
@@ -136,6 +136,14 @@ public class CTokenizer extends Tokenizer<CToken, CParseContext> {
 					startCol = colNo - 1;
 					text.append(ch);
 					state = 22;
+				}else if (ch == '=') {
+					startCol = colNo - 1;
+					text.append(ch);
+					state = 23;
+				} else if (ch == ';') {
+					startCol = colNo - 1;
+					text.append(ch);
+					state = 24;
 				} else {			// ヘンな文字を読んだ
 					startCol = colNo - 1;
 					text.append(ch);
@@ -334,8 +342,17 @@ public class CTokenizer extends Tokenizer<CToken, CParseContext> {
 				}
 				break;
 
-			}
+			case 23:					// = を読んだ
+				tk = new CToken(CToken.TK_ASSIGN, lineNo, startCol, "=");
+				accept = true;
+				break;
 
+			case 24:					// ; を読んだ
+				tk = new CToken(CToken.TK_SEMI, lineNo, startCol, ";");
+				accept = true;
+				break;
+
+			}
 		}
 		return tk;
 	}
