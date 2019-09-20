@@ -41,7 +41,7 @@ public class Variable extends CParseRule{
 				list = new Array(pcx);
 				list.parse(pcx);
 				array = list;
-				tk = ct.getNextToken(pcx);
+				tk = ct.getCurrentToken(pcx);
 			}
 		}
 		variable = ident;
