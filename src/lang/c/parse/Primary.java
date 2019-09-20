@@ -94,14 +94,18 @@ class PrimaryMult extends CParseRule {
 
     }
 
-    public void semanticCheck(CParseContext pcx) throws FatalErrorException {
-        variable.semanticCheck(pcx);
-        setCType(variable.getCType());
-        setConstant(variable.isConstant());
-        if(variable.getCType().getType() == CType.T_int || variable.getCType().getType() == CType.T_iarray) {
-            pcx.fatalError("ポインタ参照の変数はint型やint型の配列ではいけません.");
+	public void semanticCheck(CParseContext pcx) throws FatalErrorException {
+		if(variable != null) {
+			variable.semanticCheck(pcx);
+			setCType(variable.getCType());
+			setConstant(variable.isConstant());
+		}
+		if(variable.getCType().getType() == CType.T_int || variable.getCType().getType() == CType.T_iarray) {
+			pcx.fatalError("ポインタ参照の変数はint型やint型の配列ではいけません.");
+		}else if(variable.getCType().getType() == CType.T_pint){
+            this.setCType(CType.getCType(CType.T_int));
         }
-    }
+	}
 
     public void codeGen(CParseContext pcx) throws FatalErrorException {
         PrintStream o = pcx.getIOContext().getOutStream();
