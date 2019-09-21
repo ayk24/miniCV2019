@@ -160,6 +160,14 @@ public class CTokenizer extends Tokenizer<CToken, CParseContext> {
 					startCol = colNo - 1;
 					text.append(ch);
 					state = 32;
+				} else if (ch == '{') {
+					startCol = colNo - 1;
+					text.append(ch);
+					state = 36;
+				} else if (ch == '}') {
+					startCol = colNo - 1;
+					text.append(ch);
+					state = 37;
 				} else {			// ヘンな文字を読んだ
 					startCol = colNo - 1;
 					text.append(ch);
@@ -252,12 +260,12 @@ public class CTokenizer extends Tokenizer<CToken, CParseContext> {
 				}
 				break;
 
-			case 10:	// &
+			case 10:				// '&'を読んだ
 				tk = new CToken(CToken.TK_AMP, lineNo, startCol, "&");
 				accept = true;
 				break;
 
-			case 11:	// '数の終わり'かどうかを確認する
+			case 11:				// '数の終わり'かどうかを確認する
 				try {
 					if(Integer.decode(text.toString()) <= 0xFFFF) {
 						tk = new CToken(CToken.TK_NUM, lineNo, startCol, text.toString());
@@ -289,10 +297,10 @@ public class CTokenizer extends Tokenizer<CToken, CParseContext> {
 				if (ch >= '0' && ch <= '7') {
 					text.append(ch);
 				}
-				else if(ch >= '8' && ch <= '9') {	// 8や9が来たら, 不正
+				else if(ch >= '8' && ch <= '9') {// 8や9が来たら, 不正
 					state = 2;
 				} else {
-					backChar(ch);					// 数を表さない文字は戻す（読まなかったことにする）
+					backChar(ch);				// 数を表さない文字は戻す（読まなかったことにする）
 					state = 11;
 				}
 				break;
@@ -358,6 +366,16 @@ public class CTokenizer extends Tokenizer<CToken, CParseContext> {
 						tk = new CToken(CToken.TK_TRUE, lineNo, startCol, "true");
 					} else if(s.equals("false")){
 						tk = new CToken(CToken.TK_FALSE, lineNo, startCol, "false");
+					} else if(s.equals("if")){
+						tk = new CToken(CToken.TK_IF, lineNo, startCol, "if");
+					} else if(s.equals("else")){
+						tk = new CToken(CToken.TK_ELSE, lineNo, startCol, "else");
+					} else if(s.equals("while")){
+						tk = new CToken(CToken.TK_WHILE, lineNo, startCol, "while");
+					} else if(s.equals("input")){
+						tk = new CToken(CToken.TK_INPUT, lineNo, startCol, "input");
+					} else if(s.equals("output")){
+						tk = new CToken(CToken.TK_OUTPUT, lineNo, startCol, "output");
 					} else {
 						Integer i = (Integer) rule.get(s);
 						tk = new CToken(((i == null) ? CToken.TK_IDENT : i.intValue()), lineNo, startCol, text.toString());
@@ -452,6 +470,16 @@ public class CTokenizer extends Tokenizer<CToken, CParseContext> {
 
 			case 35:					// = を読んだ
 				tk = new CToken(CToken.TK_ASSIGN, lineNo, startCol, "=");
+				accept = true;
+				break;
+
+			case 36:					// { を読んだ
+				tk = new CToken(CToken.TK_LCUR, lineNo, startCol, "{");
+				accept = true;
+				break;
+
+			case 37:					// } を読んだ
+				tk = new CToken(CToken.TK_RCUR, lineNo, startCol, "}");
 				accept = true;
 				break;
 			}

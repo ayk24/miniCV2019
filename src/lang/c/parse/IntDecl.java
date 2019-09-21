@@ -25,34 +25,30 @@ public class IntDecl extends CParseRule {
 
 	public void parse(CParseContext pcx) throws FatalErrorException {
 		CTokenizer ct = pcx.getTokenizer();
-		CToken tk = ct.getCurrentToken(pcx);
+		CToken tk = ct.getNextToken(pcx);
 
-		if (tk.getType() == CToken.TK_INT) {
-			tk = ct.getNextToken(pcx);
+		if (DeclItem.isFirst(tk)) {
+			declItem = new DeclItem(pcx);
+			declItem.parse(pcx);
+			intList.add(declItem);
+			tk = ct.getCurrentToken(pcx);
 
-			if (DeclItem.isFirst(tk)) {
-				declItem = new DeclItem(pcx);
-				declItem.parse(pcx);
-				intList.add(declItem);
-				tk = ct.getCurrentToken(pcx);
-
-				while (tk.getType() == CToken.TK_COMMA) {
-					tk = ct.getNextToken(pcx);
-					if (DeclItem.isFirst(tk)) {
-						declItem = new DeclItem(pcx);
-						declItem.parse(pcx);
-						intList.add(declItem);
-						tk = ct.getCurrentToken(pcx);
-					} else {
-						pcx.fatalError("','の後は'declItem'が来ます.");
-					}
-				}
-
-				if (tk.getType() == CToken.TK_SEMI) {
-					ct.getNextToken(pcx);
+			while (tk.getType() == CToken.TK_COMMA) {
+				tk = ct.getNextToken(pcx);
+				if (DeclItem.isFirst(tk)) {
+					declItem = new DeclItem(pcx);
+					declItem.parse(pcx);
+					intList.add(declItem);
+					tk = ct.getCurrentToken(pcx);
 				} else {
-					System.out.println(tk.toExplainString() + "文の終わりは';'です.");
+					pcx.fatalError("','の後は'declItem'が来ます.");
 				}
+			}
+
+			if (tk.getType() == CToken.TK_SEMI) {
+				ct.getNextToken(pcx);
+			} else {
+				System.out.println(tk.toExplainString() + "文の終わりは';'です.");
 			}
 		}
 	}

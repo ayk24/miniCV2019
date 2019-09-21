@@ -17,14 +17,21 @@ public class CToken extends SimpleToken {
 	public static final int TK_INT			= 13;				// int
 	public static final int TK_CONST		= 14;				// const
 	public static final int TK_COMMA		= 15;				// ,
-	public static final int TK_LT			= 17;				// <
-	public static final int TK_LE			= 18;				// <=
-	public static final int TK_GT			= 19;				// >
-	public static final int TK_GE			= 20;				// >=
-	public static final int TK_EQ			= 21;				// ==
-	public static final int TK_NE			= 22;				// !=
-	public static final int TK_TRUE			= 23;				// true
-	public static final int TK_FALSE		= 24;				// false
+	public static final int TK_LT			= 16;				// <
+	public static final int TK_LE			= 17;				// <=
+	public static final int TK_GT			= 18;				// >
+	public static final int TK_GE			= 19;				// >=
+	public static final int TK_EQ			= 20;				// ==
+	public static final int TK_NE			= 21;				// !=
+	public static final int TK_TRUE			= 22;				// true
+	public static final int TK_FALSE		= 23;				// false
+	public static final int TK_IF			= 24;				// if
+	public static final int TK_ELSE			= 25;				// else
+	public static final int TK_WHILE		= 26;				// while
+	public static final int TK_INPUT		= 27;				// input
+	public static final int TK_OUTPUT		= 28;				// output
+	public static final int TK_LCUR			= 29;				// {
+	public static final int TK_RCUR			= 30;				// }
 
 	// 文字のタイプ, 何行目, 何文字目, 綴り を保持
 	public CToken(int type, int lineNo, int colNo, String s) {
