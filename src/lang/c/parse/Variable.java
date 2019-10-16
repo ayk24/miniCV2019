@@ -80,9 +80,9 @@ public class Variable extends CParseRule{
 		if(ident != null) { ident.codeGen(pcx); }
 		if(array != null) {
 			array.codeGen(pcx);
-			o.println("\tMOV\t-(R6), R1\t; Variable : 添え字の値を持ってくる.");
-			o.println("\tADD\t-(R6), R1\t; Variable : 変数アドレスの番地に添え字の数を足し, スタックに積む.");
-			o.println("\tMOV\t R1, (R6)+\t; Variable :");
+//			o.println("\tMOV\t-(R6), R1\t; Variable : 添え字の値を持ってくる.");
+//			o.println("\tADD\t-(R6), R1\t; Variable : 変数アドレスの番地に添え字の数を足し, スタックに積む.");
+//			o.println("\tMOV\t R1, (R6)+\t; Variable :");
 		}
 		o.println(";;; variable completes");
 	}

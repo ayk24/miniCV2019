@@ -27,16 +27,10 @@ public class Array extends CParseRule {
 		CTokenizer ct = pcx.getTokenizer();
 		CToken tk = ct.getNextToken(pcx);
 
-		System.out.println(tk.getText());
-
 		if(Expression.isFirst(tk)) {
 			expression = new Expression(pcx);
 			expression.parse(pcx);
-
 			tk = ct.getCurrentToken(pcx);
-
-
-			System.out.println(tk.getText());
 
 			if(tk.getType() != CToken.TK_RBRA) {
 				pcx.fatalError("']'がありません.");
@@ -62,11 +56,9 @@ public class Array extends CParseRule {
 		PrintStream o = pcx.getIOContext().getOutStream();
 		o.println(";;; array starts");
 		if (expression != null) { expression.codeGen(pcx); }
-
-		//		o.println("\tMOV\t-(R6), R0\t; Array: 配列が示す番地を計算し, 格納します.");
-		//		o.println("\tADD\t-(R6), R0\t; Array:");
-		//		o.println("\tMOV\tR0, (R6)+\t; Array:");
-
+		o.println("\tMOV\t-(R6), R0\t; Array: 配列が示す番地を計算し, 格納します.");
+		o.println("\tADD\t-(R6), R0\t; Array:");
+		o.println("\tMOV\tR0, (R6)+\t; Array:");
 		o.println(";;; array completes");
 
 	}
