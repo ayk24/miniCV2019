@@ -50,8 +50,12 @@ public class FactorAmp extends CParseRule {
 			if(((Primary) primary).checkObject() instanceof PrimaryMult) {
 				pcx.fatalError("&*varといった表現は禁止されています.");
 			}
+
 			primary.semanticCheck(pcx);
-			setCType(primary.getCType());
+			if(primary.getCType().getType() == CType.T_pint || primary.getCType().getType() == CType.T_parray) {
+				pcx.fatalError("ポインタへのポインタはこの言語では使用できません.");
+			}
+			setCType(CType.getCType(CType.T_pint));
 			setConstant(primary.isConstant());
 		}
 
