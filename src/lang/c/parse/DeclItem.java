@@ -52,7 +52,7 @@ public class DeclItem extends CParseRule
                 tk = ct.getNextToken(pcx);
             }
             if (tk.getType() != CToken.TK_RBRA) {
-                pcx.fatalError("'NUM'の後には'IDENT'が来ます.");
+                pcx.fatalError("']'が来ます.");
             }
             tk = ct.getNextToken(pcx);
         }

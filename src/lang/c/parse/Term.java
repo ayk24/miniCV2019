@@ -122,9 +122,9 @@ class TermMult extends CParseRule {
 		if (left != null && right != null) {
 			left.codeGen(pcx);		// 左部分木のコード生成を頼む
 			right.codeGen(pcx);		// 右部分木のコード生成を頼む
-			o.println("\tJSR\tMUL\t\t\t; TermMul:");
-			// o.println("\tSUB\t#2, R6\t; TermMul:");
-			// o.println("\tMOV\tR0, (R6)+\t; TermMul:");
+			o.println("\tJSR\tMUL\t\t\t; TermMult:");
+			o.println("\tSUB\t#2, R6\t\t; TermMult:");
+			o.println("\tMOV\tR0, (R6)+\t; TermMult:");
 		}
 		o.println(";;; termmult completes");
 	}
@@ -191,8 +191,8 @@ class TermDiv extends CParseRule {
 			right.codeGen(pcx);		// 左部分木のコード生成を頼む
 			left.codeGen(pcx);		// 右部分木のコード生成を頼む
 			o.println("\tJSR\tDIV\t\t\t; TermDiv:");
-			// o.println("\tSUB\t#2, R6\t; TermDiv:");
-			// o.println("\tMOV\tR0, (R6)+\t; TermDiv:");
+			o.println("\tSUB\t#2, R6\t\t; TermDiv:");
+			o.println("\tMOV\tR0, (R6)+\t; TermDiv:");
 		}
 		o.println(";;; termdiv completes");
 	}

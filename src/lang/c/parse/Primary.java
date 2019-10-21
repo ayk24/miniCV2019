@@ -90,6 +90,8 @@ class PrimaryMult extends CParseRule {
 		if(Variable.isFirst(tk)) {
 			variable = new Variable(pcx);
 			variable.parse(pcx);
+		}else{
+			pcx.fatalError("変数でないものをポインタ参照しようとしています.");
 		}
 
 	}
