@@ -57,11 +57,9 @@ public class Array extends CParseRule {
 		PrintStream o = pcx.getIOContext().getOutStream();
 		o.println(";;; array starts");
 		if (expression != null) { expression.codeGen(pcx); }
-
-		//		o.println("\tMOV\t-(R6), R0\t; Array: 配列が示す番地を計算し, 格納します.");
-		//		o.println("\tADD\t-(R6), R0\t; Array:");
-		//		o.println("\tMOV\tR0, (R6)+\t; Array:");
-
+		o.println("\tMOV\t-(R6), R0\t; Array: 配列が示す番地を計算し, 格納します.");
+		o.println("\tADD\t-(R6), R0\t; Array:");
+		o.println("\tMOV\tR0, (R6)+\t; Array:");
 		o.println(";;; array completes");
 
 	}

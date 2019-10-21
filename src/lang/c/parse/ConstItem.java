@@ -61,9 +61,10 @@ public class ConstItem extends CParseRule {
                 }else{
                     pcx.fatalError("右辺がありません.");
                 }
-
-            } else {
-                pcx.fatalError(tk.toExplainString() + "初期値の定義がされません.");
+            }else if(tk.getType() == CToken.TK_NUM){
+            	pcx.fatalError("'='がありません.");
+            }else{
+                pcx.fatalError("初期値の定義がされていません.");
             }
 
             if(isPointer == true){

@@ -51,7 +51,7 @@ public class Condition extends CParseRule {
 				condition = new ConditionNE(pcx, expression);
 				condition.parse(pcx);
 			} else {
-				pcx.fatalError("'expression'のあとは, 比較演算子が来ます.");
+				pcx.fatalError("比較演算子が来ます.");
 			}
 		} else if(tk.getType() == CToken.TK_TRUE) {
 			flag = true;
@@ -81,4 +81,5 @@ public class Condition extends CParseRule {
 			}
 		}
 		o.println(";;; condition completes");
-	}}
+	}
+}

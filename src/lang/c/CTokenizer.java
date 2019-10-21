@@ -265,15 +265,17 @@ public class CTokenizer extends Tokenizer<CToken, CParseContext> {
 				accept = true;
 				break;
 
-			case 11:				// '数の終わり'かどうかを確認する
+			case 11:	// '数の終わり'かどうかを確認する
 				try {
 					if(Integer.decode(text.toString()) <= 0xFFFF) {
 						tk = new CToken(CToken.TK_NUM, lineNo, startCol, text.toString());
 						accept = true;
 					} else {
+						System.err.println("ERROR : Bit size is too large.<case 11>");
 						state = 2;
 					}
 				} catch(Exception e) {
+					System.err.println("ERROR : Illegal character.<case 11>");
 					state = 2;
 				}
 				break;
@@ -297,10 +299,11 @@ public class CTokenizer extends Tokenizer<CToken, CParseContext> {
 				if (ch >= '0' && ch <= '7') {
 					text.append(ch);
 				}
-				else if(ch >= '8' && ch <= '9') {// 8や9が来たら, 不正
-					state = 2;
+				else if(ch >= '8' && ch <= '9') {	// 8や9が来たら, 不正
+					backChar(ch);
+					state = 11;
 				} else {
-					backChar(ch);				// 数を表さない文字は戻す（読まなかったことにする）
+					backChar(ch);					// 数を表さない文字は戻す（読まなかったことにする）
 					state = 11;
 				}
 				break;
@@ -309,7 +312,9 @@ public class CTokenizer extends Tokenizer<CToken, CParseContext> {
 				ch = readChar();
 				if (ch >= '0' && ch <= '9' || ch >= 'a' && ch <= 'f' || ch >= 'A' && ch <= 'F') {
 					text.append(ch);
+					state = 15;
 				} else {
+					System.err.println("ERROR : Illegal character.<case 14>");
 					state = 2;
 				}
 				break;
@@ -376,6 +381,8 @@ public class CTokenizer extends Tokenizer<CToken, CParseContext> {
 						tk = new CToken(CToken.TK_INPUT, lineNo, startCol, "input");
 					} else if(s.equals("output")){
 						tk = new CToken(CToken.TK_OUTPUT, lineNo, startCol, "output");
+					} else if(s.equals("elseif")){
+						tk = new CToken(CToken.TK_ELSEIF, lineNo, startCol, "elseif");
 					} else {
 						Integer i = (Integer) rule.get(s);
 						tk = new CToken(((i == null) ? CToken.TK_IDENT : i.intValue()), lineNo, startCol, text.toString());

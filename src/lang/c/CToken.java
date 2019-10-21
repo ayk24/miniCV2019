@@ -32,6 +32,7 @@ public class CToken extends SimpleToken {
 	public static final int TK_OUTPUT		= 28;				// output
 	public static final int TK_LCUR			= 29;				// {
 	public static final int TK_RCUR			= 30;				// }
+	public static final int TK_ELSEIF		= 31;				// elseif
 
 	// 文字のタイプ, 何行目, 何文字目, 綴り を保持
 	public CToken(int type, int lineNo, int colNo, String s) {
