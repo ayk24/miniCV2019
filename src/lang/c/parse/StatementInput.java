@@ -34,7 +34,8 @@ public class StatementInput extends CParseRule {
 			}else {
 				pcx.fatalError("'primary'のあとは';'が来ます.");
 			}
-
+		}else {
+			pcx.fatalError("'primary'がありません.");
 		}
 	}
 

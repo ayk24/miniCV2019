@@ -65,12 +65,12 @@ public class ConditionEQ extends CParseRule {
 			o.println("\tMOV\t-(R6), R1\t; ConditionEQ:");
 			o.println("\tMOV\t#0x0001, R2\t; ConditionEQ: set true");
 			o.println("\tCMP\tR0, R1\t\t; ConditionEQ: R1==R0 = R1-R0=0");
-			
+
 			// もし, R1-R0=0ならばZビットが立つので, BRZ命令でサブルーチンEQにジャンプし,
 			// R2(true)をスタックトップに積む.
 			// ただし, 0でなかったらBRZ命令はスルーし, 次のCLR命令でR2にfalseをセットする.
 			// そして, サブルーチンEQにてR2(false)がスタックトップに積まれる.
-			
+
 			o.println("\tBRZ\tEQ" + seq + "\t\t\t; ConditionEQ:");
 			o.println("\tCLR\tR2\t\t\t; ConditionEQ: set false");
 			o.println("EQ" + seq + ":MOV\tR2, (R6)+\t; ConditionEQ:");

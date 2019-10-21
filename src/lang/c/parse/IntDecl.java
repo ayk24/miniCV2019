@@ -48,7 +48,7 @@ public class IntDecl extends CParseRule {
 			if (tk.getType() == CToken.TK_SEMI) {
 				ct.getNextToken(pcx);
 			} else {
-				System.out.println(tk.toExplainString() + "文の終わりは';'です.");
+				pcx.fatalError("';'がありません.");
 			}
 		}
 	}
