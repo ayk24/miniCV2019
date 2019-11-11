@@ -10,39 +10,41 @@ import lang.c.CTokenizer;
 
 public class Declaration extends CParseRule {
 
-    // declaraiton ::= intDecl | constDecl
+	// declaration ::= intDecl | constDecl | voidDecl
 
-	private CParseRule intDecl;
-    private CParseRule constDecl;
+	private CParseRule cParseRule;
 
-    public Declaration(CParseContext pcx) {
-    }
+	public Declaration(CParseContext pcx) {
+	}
+	public static boolean isFirst(CToken tk) {
+		return IntDecl.isFirst(tk) || ConstDecl.isFirst(tk) || VoidDecl.isFirst(tk);
+	}
+	public void parse(CParseContext pcx) throws FatalErrorException {
+		CTokenizer ct = pcx.getTokenizer();
+		CToken tk = ct.getCurrentToken(pcx);
 
-    public static boolean isFirst(CToken tk) {
-        return IntDecl.isFirst(tk) || ConstDecl.isFirst(tk);
-    }
+		if (IntDecl.isFirst(tk)) {
+			cParseRule = new IntDecl(pcx);
+			cParseRule.parse(pcx);
+		} else if(ConstDecl.isFirst(tk)) {
+			cParseRule = new ConstDecl(pcx);
+			cParseRule.parse(pcx);
+		} else if(VoidDecl.isFirst(tk)) {
+			cParseRule = new VoidDecl(pcx);
+			cParseRule.parse(pcx);
+		}
+	}
 
-    public void parse(CParseContext pcx) throws FatalErrorException {
-        CTokenizer ct = pcx.getTokenizer();
-        CToken tk = ct.getCurrentToken(pcx);
+	public void semanticCheck(CParseContext pcx) throws FatalErrorException {
+		if (cParseRule != null) {
+			cParseRule.semanticCheck(pcx);
+		}
+	}
 
-        if (IntDecl.isFirst(tk)) {
-            intDecl = new IntDecl(pcx);
-            intDecl.parse(pcx);
-        } else if (ConstDecl.isFirst(tk)) {
-            constDecl = new ConstDecl(pcx);
-            constDecl.parse(pcx);
-        }
-    }
-
-    public void semanticCheck(CParseContext pcx) throws FatalErrorException {
-    }
-
-    public void codeGen(CParseContext pcx) throws FatalErrorException {
-        PrintStream o = pcx.getIOContext().getOutStream();
-        o.println(";;; declaration starts");
-        if (intDecl != null) {intDecl.codeGen(pcx);}
-        if (constDecl != null) {constDecl.codeGen(pcx);}
-        o.println(";;; declaration completes");
-    }
+	public void codeGen(CParseContext pcx) throws FatalErrorException {
+		PrintStream o = pcx.getIOContext().getOutStream();
+		o.println(";;; declaration starts");
+		if (cParseRule != null) { cParseRule.codeGen(pcx); }
+		o.println(";;; declaration completes");
+	}
 }

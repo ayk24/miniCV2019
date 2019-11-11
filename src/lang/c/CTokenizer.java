@@ -1,4 +1,4 @@
-package lang.c;
+ package lang.c;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -7,7 +7,6 @@ import java.io.PrintStream;
 import lang.Tokenizer;
 
 public class CTokenizer extends Tokenizer<CToken, CParseContext> {
-	@SuppressWarnings("unused")
 	private CTokenRule	rule;
 	private int			lineNo, colNo;
 	private char		backCh;
@@ -36,10 +35,9 @@ public class CTokenizer extends Tokenizer<CToken, CParseContext> {
 		}
 		++colNo;
 		if (ch == '\n')  { colNo = 1; ++lineNo; }
-		//		System.out.print("'"+ch+"'("+(int)ch+")");
+//		System.out.print("'"+ch+"'("+(int)ch+")");
 		return ch;
 	}
-
 	private void backChar(char c) {
 		backCh = c;
 		backChExist = true;
@@ -52,28 +50,14 @@ public class CTokenizer extends Tokenizer<CToken, CParseContext> {
 	public CToken getCurrentToken(CParseContext pctx) {
 		return currentTk;
 	}
-
 	// 次のトークンを読んで返す
 	public CToken getNextToken(CParseContext pctx) {
 		in = pctx.getIOContext().getInStream();
 		err = pctx.getIOContext().getErrStream();
 		currentTk = readToken();
-		//		System.out.println("Token='" + currentTk.toString());
+//		System.out.println("Token='" + currentTk.toString());
 		return currentTk;
 	}
-
-
-	// 課題1での疑問点
-	// startCol = colNo-1; ･･･(*) については, readChar()が呼ばれた後に行っている.
-
-	// 新たなひとかたまりを始める書く必要ある感(終端記号の後)
-	// 例えば, 数なら 数字を読む前に(*)を行い, 終わったら, state=0に遷移し,
-	// そこで新たな種類の文字を読む際に, readChar()後, 再び(*)を行う.
-
-	// 今回の場合は '// コメント' と '/*' と 'コメント*/' という組み合わせでひとかたまりで見てる
-
-	// ただ読まなかったことにする際にはbackChar()内でやってくれるので,
-	// 書く必要はなし.
 
 	private CToken readToken() {
 		CToken tk = null;
@@ -168,6 +152,14 @@ public class CTokenizer extends Tokenizer<CToken, CParseContext> {
 					startCol = colNo - 1;
 					text.append(ch);
 					state = 37;
+				} else if (ch == '@') {
+					startCol = colNo - 1;
+					text.append(ch);
+					state = 38;
+				} else if (ch == '|') {
+					startCol = colNo - 1;
+					text.append(ch);
+					state = 40;
 				} else {			// ヘンな文字を読んだ
 					startCol = colNo - 1;
 					text.append(ch);
@@ -261,8 +253,15 @@ public class CTokenizer extends Tokenizer<CToken, CParseContext> {
 				break;
 
 			case 10:				// '&'を読んだ
-				tk = new CToken(CToken.TK_AMP, lineNo, startCol, "&");
-				accept = true;
+				ch = readChar();
+				if (ch == '&') {
+					text.append(ch);
+					state = 39;
+				} else {
+					backChar(ch);
+					tk = new CToken(CToken.TK_AMP, lineNo, startCol, "&");
+					accept = true;
+				}
 				break;
 
 			case 11:	// '数の終わり'かどうかを確認する
@@ -365,28 +364,10 @@ public class CTokenizer extends Tokenizer<CToken, CParseContext> {
 					text.append(ch);
 				}else {
 					// ident の終わり
-					backChar(ch);		// identを表さない文字は戻す(読まなかったことにする)
+					backChar(ch);
 					String s = text.toString();
-					if(s.equals("true")){
-						tk = new CToken(CToken.TK_TRUE, lineNo, startCol, "true");
-					} else if(s.equals("false")){
-						tk = new CToken(CToken.TK_FALSE, lineNo, startCol, "false");
-					} else if(s.equals("if")){
-						tk = new CToken(CToken.TK_IF, lineNo, startCol, "if");
-					} else if(s.equals("else")){
-						tk = new CToken(CToken.TK_ELSE, lineNo, startCol, "else");
-					} else if(s.equals("while")){
-						tk = new CToken(CToken.TK_WHILE, lineNo, startCol, "while");
-					} else if(s.equals("input")){
-						tk = new CToken(CToken.TK_INPUT, lineNo, startCol, "input");
-					} else if(s.equals("output")){
-						tk = new CToken(CToken.TK_OUTPUT, lineNo, startCol, "output");
-					} else if(s.equals("elseif")){
-						tk = new CToken(CToken.TK_ELSEIF, lineNo, startCol, "elseif");
-					} else {
-						Integer i = (Integer) rule.get(s);
-						tk = new CToken(((i == null) ? CToken.TK_IDENT : i.intValue()), lineNo, startCol, text.toString());
-					}
+					Integer i = (Integer) rule.get(s);
+					tk = new CToken(((i == null) ? CToken.TK_IDENT : i.intValue()), lineNo, startCol, s);
 					accept = true;
 				}
 				break;
@@ -461,7 +442,8 @@ public class CTokenizer extends Tokenizer<CToken, CParseContext> {
 					state = 33;
 				} else {
 					backChar(ch);
-					state = 2;
+					tk = new CToken(CToken.TK_NOT, lineNo, startCol, "!");
+					accept = true;
 				}
 				break;
 
@@ -487,6 +469,33 @@ public class CTokenizer extends Tokenizer<CToken, CParseContext> {
 
 			case 37:					// } を読んだ
 				tk = new CToken(CToken.TK_RCUR, lineNo, startCol, "}");
+				accept = true;
+				break;
+
+			case 38:					// @ を読んだ
+				tk = new CToken(CToken.TK_AT, lineNo, startCol, "@");
+				accept = true;
+				break;
+
+			case 39:					// && を読んだ
+				tk = new CToken(CToken.TK_AND, lineNo, startCol, "&&");
+				accept = true;
+				break;
+
+			case 40:					// | を読んだ
+				ch = readChar();
+				if (ch == '|') {
+					text.append(ch);
+					state = 41;
+				} else {
+					backChar(ch);
+					tk = new CToken(CToken.TK_ILL, lineNo, startCol, text.toString());
+					accept = true;
+				}
+				break;
+
+			case 41:					// || を読んだ
+				tk = new CToken(CToken.TK_OR, lineNo, startCol, "||");
 				accept = true;
 				break;
 			}

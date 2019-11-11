@@ -11,13 +11,10 @@ import lang.c.CType;
 
 public class Variable extends CParseRule{
 
-	// variable ::= ident [ array ]
+	// variable ::= ident [ array | call ]
 
-	private CParseRule ident;
-	private CParseRule array;
-
-	private CParseRule list;
-	private CParseRule variable;
+	private CParseRule ident, array, call;
+	private CToken idtk;
 
 	public Variable(CParseContext pcx) {
 	}
@@ -26,59 +23,61 @@ public class Variable extends CParseRule{
 		return Ident.isFirst(tk);
 	}
 
-
 	public void parse(CParseContext pcx) throws FatalErrorException {
-		// ここにやってくるときは、必ずisFirst()が満たされている
 		CTokenizer ct = pcx.getTokenizer();
 		CToken tk = ct.getCurrentToken(pcx);
-
-		if(tk.getType() == CToken.TK_IDENT) {
+		if (Ident.isFirst(tk)) {
+			idtk = tk;
 			ident = new Ident(pcx);
 			ident.parse(pcx);
-			tk = ct.getCurrentToken(pcx);
-
-			if(tk.getType() == CToken.TK_LBRA){
-				list = new Array(pcx);
-				list.parse(pcx);
-				array = list;
-				tk = ct.getCurrentToken(pcx);
-			}
 		}
-		variable = ident;
+
+		tk = ct.getCurrentToken(pcx);
+
+		if (Array.isFirst(tk)) {
+			array = new Array(pcx);
+			array.parse(pcx);
+		}
+
+		if (Call.isFirst(tk)) {
+			call = new Call(pcx, idtk);
+			call.parse(pcx);
+		}
 	}
 
 	public void semanticCheck(CParseContext pcx) throws FatalErrorException {
-		if (variable != null) {
-			variable.semanticCheck(pcx);
+		if (ident != null) {
+			ident.semanticCheck(pcx);
+			setCType(ident.getCType());
 			if (array != null) {
 				array.semanticCheck(pcx);
-				if (variable.getCType().getType() == CType.T_iarray) {
+				if (ident.getCType() == CType.getCType(CType.T_iarray)) {
 					setCType(CType.getCType(CType.T_int));
-				} else if (variable.getCType().getType() == CType.T_parray) {
+				} else if (ident.getCType() == CType.getCType(CType.T_parray)) {
 					setCType(CType.getCType(CType.T_pint));
-				} else if (variable.getCType().getType() == CType.T_err) {
+				} else if (ident.getCType().getType() == CType.T_err) {
 					pcx.fatalError("identの識別子はintでなければなりません.");
-				} else if (variable.getCType().getType() == CType.T_int) {
+				} else if (ident.getCType().getType() == CType.T_int) {
 					pcx.fatalError("int型の変数を配列型として扱っています.");
-				} else if (variable.getCType().getType() == CType.T_pint) {
+				} else if (ident.getCType().getType() == CType.T_pint) {
 					pcx.fatalError("pint型の変数を配列型として扱っています.");
 				}
-			} else {
-				if (variable.getCType().getType() == CType.T_iarray || variable.getCType().getType() == CType.T_parray) {
-					pcx.fatalError("配列には添え字が必要です.");
-				}
-				setCType(variable.getCType());
 			}
-			setConstant(variable.isConstant());
+			if (call != null) {
+				if (call.isConstant()) {
+					pcx.fatalError("定数には代入できません.");
+				}
+			}
+			setConstant(ident.isConstant());
 		}
 	}
-
 
 	public void codeGen(CParseContext pcx) throws FatalErrorException {
 		PrintStream o = pcx.getIOContext().getOutStream();
 		o.println(";;; variable starts");
-		if(ident != null) { ident.codeGen(pcx); }
-		if(array != null) {	array.codeGen(pcx); }
+		if (ident != null) { ident.codeGen(pcx);}
+		if (array != null) { array.codeGen(pcx);}
+		if (call != null) { call.codeGen(pcx);}
 		o.println(";;; variable completes");
 	}
 }

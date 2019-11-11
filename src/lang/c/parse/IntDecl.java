@@ -1,6 +1,5 @@
 package lang.c.parse;
 
-import java.io.PrintStream;
 import java.util.ArrayList;
 
 import lang.FatalErrorException;
@@ -13,42 +12,51 @@ public class IntDecl extends CParseRule {
 
 	// intDecl ::= INT declItem { COMMA declItem } SEMI
 
-	private CParseRule declItem;
-	private ArrayList<CParseRule> intList;
+	private ArrayList<DeclItem> declItemList;
+	private DeclItem declItem;
 
 	public IntDecl(CParseContext pcx) {
-		intList = new ArrayList<CParseRule>();
+		declItemList = new ArrayList<DeclItem>();
+
 	}
+
 	public static boolean isFirst(CToken tk) {
 		return tk.getType() == CToken.TK_INT;
 	}
 
 	public void parse(CParseContext pcx) throws FatalErrorException {
 		CTokenizer ct = pcx.getTokenizer();
-		CToken tk = ct.getNextToken(pcx);
+		CToken tk = ct.getCurrentToken(pcx);
 
-		if (DeclItem.isFirst(tk)) {
-			declItem = new DeclItem(pcx);
-			declItem.parse(pcx);
-			intList.add(declItem);
-			tk = ct.getCurrentToken(pcx);
+		if (tk.getType() == CToken.TK_INT) {
+			tk = ct.getNextToken(pcx);
 
-			while (tk.getType() == CToken.TK_COMMA) {
+			if(DeclItem.isFirst(tk)) {
+				declItem = new DeclItem(pcx);
+				declItem.parse(pcx);
+				declItemList.add(declItem);
+				tk = ct.getCurrentToken(pcx);
+			} else {
+				pcx.fatalError(tk.toExplainString() + "識別子がありません.");
+			}
+
+			while(tk.getType() == CToken.TK_COMMA) {
 				tk = ct.getNextToken(pcx);
 				if (DeclItem.isFirst(tk)) {
 					declItem = new DeclItem(pcx);
 					declItem.parse(pcx);
-					intList.add(declItem);
+					declItemList.add(declItem);
 					tk = ct.getCurrentToken(pcx);
 				} else {
-					pcx.fatalError("','の後は'declItem'が来ます.");
+					pcx.fatalError(tk.toExplainString() + "連続して宣言する識別子がありません.");
 				}
+
 			}
 
 			if (tk.getType() == CToken.TK_SEMI) {
-				ct.getNextToken(pcx);
+				tk = ct.getNextToken(pcx);
 			} else {
-				pcx.fatalError("';'がありません.");
+				pcx.fatalError(tk.toExplainString() + "';'がありません.");
 			}
 		}
 	}
@@ -57,13 +65,8 @@ public class IntDecl extends CParseRule {
 	}
 
 	public void codeGen(CParseContext pcx) throws FatalErrorException {
-		PrintStream o = pcx.getIOContext().getOutStream();
-		o.println(";;; intDecl starts");
-		if (declItem != null) {
-			for (CParseRule declItem : intList) {
-				declItem.codeGen(pcx);
-			}
+		for (CParseRule declItem : declItemList) {
+			declItem.codeGen(pcx);
 		}
-		o.println(";;; intDecl completes");
 	}
 }

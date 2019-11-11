@@ -52,9 +52,9 @@ public class StatementInput extends CParseRule {
 		PrintStream o = pcx.getIOContext().getOutStream();
 		o.println(";;; statementInput starts");
 		if (primary != null) { primary.codeGen(pcx); }
-		o.println("\tMOV\t-(R6), R0\t; statementInput");
-		o.println("\tMOV\t#0xFFE0, R1\t; statementInput");
-		o.println("\tMOV\t(R1), (R0)\t; statementInput");
+		o.println("\tMOV\t-(R6), R0\t; statementInput:");
+		o.println("\tMOV\t#0xFFE0, R1\t; statementInput:");
+		o.println("\tMOV\t(R1), (R0)\t; statementInput:");
 		o.println(";;; statementInput completes");
 	}
 }

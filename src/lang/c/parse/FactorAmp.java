@@ -24,7 +24,6 @@ public class FactorAmp extends CParseRule {
 	}
 
 	public void parse(CParseContext pcx) throws FatalErrorException {
-		// ここにやってくるときは、必ずisFirst()が満たされている
 		CTokenizer ct = pcx.getTokenizer();
 		CToken tk = ct.getNextToken(pcx);
 
@@ -42,13 +41,13 @@ public class FactorAmp extends CParseRule {
 	public void semanticCheck(CParseContext pcx) throws FatalErrorException {
 		if (number != null) {
 			number.semanticCheck(pcx);
-			setCType(CType.getCType(CType.T_pint));		// factorAmpの型をそのままコピー
-			setConstant(number.isConstant());			// number は常に定数
+			setCType(CType.getCType(CType.T_pint));
+			setConstant(number.isConstant());
 		}
 
 		if(primary != null) {
 			if(((Primary) primary).checkObject() instanceof PrimaryMult) {
-				pcx.fatalError("&*varといった表現は禁止されています.");
+				pcx.fatalError("&の後ろに*が来てはいけません.");
 			}
 			primary.semanticCheck(pcx);
 			if(primary.getCType().getType() == CType.T_pint || primary.getCType().getType() == CType.T_parray) {

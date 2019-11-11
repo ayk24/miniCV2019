@@ -49,9 +49,9 @@ public class StatementOutput extends CParseRule {
 		PrintStream o = pcx.getIOContext().getOutStream();
 		o.println(";;; statementOutput starts");
 		if (expression != null) { expression.codeGen(pcx); }
-		o.println("\tMOV\t-(R6), R0\t; statementOutput");
-		o.println("\tMOV\t#0xFFE0, R1\t; statementOutput");
-		o.println("\tMOV\tR0, (R1)\t; statementOutput");
+		o.println("\tMOV\t-(R6), R0\t; statementOutput:");
+		o.println("\tMOV\t#0xFFE0, R1\t; statementOutput:");
+		o.println("\tMOV\tR0, (R1)\t; statementOutput:");
 		o.println(";;; statementOutput completes");
 	}
 }

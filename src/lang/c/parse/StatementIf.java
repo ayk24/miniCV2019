@@ -1,7 +1,6 @@
 package lang.c.parse;
 
 import java.io.PrintStream;
-import java.util.ArrayList;
 
 import lang.FatalErrorException;
 import lang.c.CParseContext;
@@ -11,13 +10,13 @@ import lang.c.CTokenizer;
 
 public class StatementIf extends CParseRule {
 
-	// statementIf ::= IF LPAR condition RPAR LCUR { statement } RCUR { ELSEIF LPAR condition RPAR LCUR { statement } RCUR } [ ELSE LCUR statement RCUR ]
+	// statementIf ::= IF conditionBlock statementBlock statementElse
 
-	private CParseRule condition, statement;
-	private int i,seq;
-	private ArrayList<CParseRule> ifConditionList, elseifConditionList, ifStateList, elseifStateList, elseStateList;
+	private CParseRule conditionBlock, statementBlock, statementElse;
+	private CToken ident;
 
-	public StatementIf(CParseContext pcx) {
+	public StatementIf(CParseContext pcx, CToken ident) {
+		this.ident = ident;
 	}
 
 	public static boolean isFirst(CToken tk) {
@@ -28,162 +27,70 @@ public class StatementIf extends CParseRule {
 		CTokenizer ct = pcx.getTokenizer();
 		CToken tk = ct.getNextToken(pcx);
 
-		ifConditionList = new ArrayList<CParseRule>();
-		elseifConditionList = new ArrayList<CParseRule>();
-		ifStateList = new ArrayList<CParseRule>();
-		elseifStateList = new ArrayList<CParseRule>();
-		elseStateList = new ArrayList<CParseRule>();
-
-
-		if (tk.getType() == CToken.TK_LPAR) {
-			tk = ct.getNextToken(pcx);
-
-			if (Condition.isFirst(tk)) {
-				condition = new Condition(pcx);
-				condition.parse(pcx);
-				ifConditionList.add(condition);
-				tk = ct.getCurrentToken(pcx);
-
-				if (tk.getType() == CToken.TK_RPAR) {
-					tk = ct.getNextToken(pcx);
-
-					if (tk.getType() == CToken.TK_LCUR) {
-						tk = ct.getNextToken(pcx);
-
-						while (Statement.isFirst(tk)) {
-							statement = new Statement(pcx);
-							statement.parse(pcx);
-							ifStateList.add(statement);
-							tk = ct.getCurrentToken(pcx);
-						}
-
-						if (tk.getType() == CToken.TK_RCUR) {
-							tk = ct.getNextToken(pcx);
-						} else {
-							pcx.fatalError("'statement'のあとは'}'が来ます.");
-						}
-
-					} else {
-						pcx.fatalError("')'のあとは'{'が来ます.");
-					}
-				} else {
-					pcx.fatalError("'condition'のあとは')'が来ます.");
-				}
-			} else {
-				pcx.fatalError("'('のあとは'condition'が来ます.");
-			}
+		if (ConditionBlock.isFirst(tk)) {
+			conditionBlock = new ConditionBlock(pcx);
+			conditionBlock.parse(pcx);
 		} else {
-			pcx.fatalError("'if'のあとは'('が来ます.");
+			pcx.fatalError(tk.toExplainString() + "条件式がありません.");
 		}
 
-		while (tk.getType() == CToken.TK_ELSEIF) {
-			tk = ct.getNextToken(pcx);
-			if (tk.getType() == CToken.TK_LPAR) {
-				tk = ct.getNextToken(pcx);
+		tk = ct.getCurrentToken(pcx);
 
-				if (Condition.isFirst(tk)) {
-					condition = new Condition(pcx);
-					condition.parse(pcx);
-					elseifConditionList.add(condition);
-					tk = ct.getCurrentToken(pcx);
-
-					if (tk.getType() == CToken.TK_RPAR) {
-						tk = ct.getNextToken(pcx);
-
-						if (tk.getType() == CToken.TK_LCUR) {
-							tk = ct.getNextToken(pcx);
-
-							while (Statement.isFirst(tk)) {
-								statement = new Statement(pcx);
-								statement.parse(pcx);
-								elseifStateList.add(statement);
-								tk = ct.getCurrentToken(pcx);
-							}
-
-							if (tk.getType() == CToken.TK_RCUR) {
-								tk = ct.getNextToken(pcx);
-							} else {
-								pcx.fatalError("'statement'のあとは'}'が来ます.");
-							}
-						} else {
-							pcx.fatalError("')'のあとは'{'が来ます.");
-						}
-					} else {
-						pcx.fatalError("'condition'のあとは')'が来ます.");
-					}
-				} else {
-					pcx.fatalError("'('のあとは'condition'が来ます.");
-				}
-			} else {
-				pcx.fatalError("'elseif'のあとは'('が来ます.");
-			}
+		if (StatementBlock.isFirst(tk)) {
+			statementBlock = new StatementBlock(pcx, ident);
+			statementBlock.parse(pcx);
+		} else {
+			pcx.fatalError(tk.toExplainString() + "条件文の中に文がありません");
 		}
 
-		if (tk.getType() == CToken.TK_ELSE) {
-			tk = ct.getNextToken(pcx);
+		tk = ct.getCurrentToken(pcx);
 
-			if (tk.getType() == CToken.TK_LCUR) {
-				tk = ct.getNextToken(pcx);
-
-				while (Statement.isFirst(tk)) {
-					statement = new Statement(pcx);
-					statement.parse(pcx);
-					elseStateList.add(statement);
-					tk = ct.getCurrentToken(pcx);
-				}
-
-				if (tk.getType() == CToken.TK_RCUR) {
-					tk = ct.getNextToken(pcx);
-				} else {
-					pcx.fatalError("'statement'のあとは'}'が来ます.");
-				}
-
-			} else {
-				pcx.fatalError("'else'のあとは'{'が来ます.");
-			}
+		if (StatementElse.isFirst(tk)) {
+			statementElse = new StatementElse(pcx, ident);
+			statementElse.parse(pcx);
 		}
 	}
 
 	public void semanticCheck(CParseContext pcx) throws FatalErrorException {
-		if (condition != null) {
-			condition.semanticCheck(pcx);
+		if (conditionBlock != null && statementBlock != null) {
+			conditionBlock.semanticCheck(pcx);
+			statementBlock.semanticCheck(pcx);
 		}
-		if (statement != null) {
-			statement.semanticCheck(pcx);
+
+		if (statementElse != null) {
+			statementElse.semanticCheck(pcx);
+			if (statementBlock.getCType() == null) {
+				setCType(statementElse.getCType());
+			} else if (statementElse.getCType() == null) {
+				setCType(statementBlock.getCType());
+			} else if (statementBlock.getCType() == statementElse.getCType()) {
+				setCType(statementBlock.getCType());
+			} else {
+				pcx.fatalError("IF文とELSE文で返り値の型が異なっています.");
+			}
+		} else {
+			setCType(statementBlock.getCType());
 		}
 	}
 
 	public void codeGen(CParseContext pcx) throws FatalErrorException {
 		PrintStream o = pcx.getIOContext().getOutStream();
 		o.println(";;; statementIf starts");
-		i = 0;
-		seq = pcx.getSeqId();
-
-		o.println("IF" + seq + ":\t\t\t\t; statementIf:");
-		for (CParseRule condition : ifConditionList) {condition.codeGen(pcx);}
-		o.println("\tMOV\t-(R6), R0\t; statementIf");
-		o.println("\tCMP\t#0x0000, R0\t; statementIf");
-		o.println("\tBRZ\tFALSE" + seq + "\t\t; statementIf");
-		o.println("TRUE" + seq + ":\t\t\t\t; statementIf");
-		for (CParseRule statement : ifStateList) { statement.codeGen(pcx); }
-		o.println("\tJMP\tENDIF" + seq + "\t\t; statementIf:");
-
-
-		for (CParseRule condition : elseifConditionList) {
-			i++;
-			o.println("IF" + (seq+i) + ":\t\t\t\t; statementIf:");
-			condition.codeGen(pcx);
-			o.println("\tMOV\t-(R6), R0\t; statementIf");
-			o.println("\tCMP\t#0x0000, R0\t; statementIf");
-			o.println("\tBRZ\tFALSE" + seq + "\t\t; statementIf");
-			o.println("TRUE" + (seq+i) + ":\t\t\t\t; statementIf");
-			elseifStateList.get(i-1).codeGen(pcx);
-			o.println("\tJMP\tENDIF" + seq + "\t\t; statementIf:");
+		if (conditionBlock != null && statementBlock != null) {
+			int seq = pcx.getSeqId();
+			o.println("IF" + seq + ":\t\t\t\t; statementIf:");
+			conditionBlock.codeGen(pcx);
+			o.println("\tMOV\t-(R6), R0\t; statementIf:");
+			o.println("\tBRZ\tFALSE" + seq + "\t\t; statementIf:");
+			o.println("TRUE" + seq + ":\t\t\t\t; statementIf");
+			statementBlock.codeGen(pcx);
+			o.println("\tJMP\tENDIF" + seq + "\t\t\t; statementIf:");
+			o.println("FALSE" + seq + ":\t\t\t\t\t; statementIf:");
+			if (statementElse != null) {
+				statementElse.codeGen(pcx);
+			}
+			o.println("ENDIF" + seq + ":\t\t\t\t; statementIf:");
 		}
-
-		o.println("FALSE" + seq + ":\t\t\t\t; statementIf:");
-		for (CParseRule statement :elseStateList) { statement.codeGen(pcx); }
-		o.println("ENDIF" + seq + ":\t\t\t\t; statementIf:");
 		o.println(";;; statementIf completes");
 	}
 }

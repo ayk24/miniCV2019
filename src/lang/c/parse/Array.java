@@ -22,8 +22,6 @@ public class Array extends CParseRule {
 	}
 
 	public void parse(CParseContext pcx) throws FatalErrorException {
-		// ここにやってくるときは、必ずisFirst()が満たされている
-
 		CTokenizer ct = pcx.getTokenizer();
 		CToken tk = ct.getNextToken(pcx);
 
@@ -36,6 +34,7 @@ public class Array extends CParseRule {
 			if(tk.getType() != CToken.TK_RBRA) {
 				pcx.fatalError("']'がありません.");
 			}
+
 			tk = ct.getNextToken(pcx);
 		}
 	}
@@ -45,7 +44,7 @@ public class Array extends CParseRule {
 			expression.semanticCheck(pcx);
 
 			if(expression.getCType() != CType.getCType(CType.T_int)){
-				pcx.fatalError("[]内は整数型ででなければいけません.");
+				pcx.fatalError("[]内はint型ででなければいけません.");
 			}
 
 			this.setCType(expression.getCType());
@@ -61,6 +60,5 @@ public class Array extends CParseRule {
 		o.println("\tADD\t-(R6), R0\t; Array:");
 		o.println("\tMOV\tR0, (R6)+\t; Array:");
 		o.println(";;; array completes");
-
 	}
 }

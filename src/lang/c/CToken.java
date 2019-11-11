@@ -32,9 +32,16 @@ public class CToken extends SimpleToken {
 	public static final int TK_OUTPUT		= 28;				// output
 	public static final int TK_LCUR			= 29;				// {
 	public static final int TK_RCUR			= 30;				// }
-	public static final int TK_ELSEIF		= 31;				// elseif
+	public static final int TK_VOID			= 31;				// void
+	public static final int TK_RETURN		= 32;				// return
+	public static final int TK_FUNC			= 33;				// func
+	public static final int TK_CALL			= 34;				// call
+	public static final int TK_AT			= 35;				// @
+	public static final int TK_NOT			= 36;				// NOT
+	public static final int TK_AND			= 37;				// AND
+	public static final int TK_OR			= 38;				// OR
 
-	// 文字のタイプ, 何行目, 何文字目, 綴り を保持
+
 	public CToken(int type, int lineNo, int colNo, String s) {
 		super(type, lineNo, colNo, s);
 	}

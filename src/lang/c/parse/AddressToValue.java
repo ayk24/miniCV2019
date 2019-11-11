@@ -31,9 +31,11 @@ public class AddressToValue extends CParseRule {
     }
 
     public void semanticCheck(CParseContext pcx) throws FatalErrorException {
-        primary.semanticCheck(pcx);
-        setCType(primary.getCType());
-        setConstant(primary.isConstant());
+		if(primary != null) {
+			primary.semanticCheck(pcx);
+			setCType(primary.getCType());
+			setConstant(primary.isConstant());
+		}
     }
 
     public void codeGen(CParseContext pcx) throws FatalErrorException {

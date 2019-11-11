@@ -1,26 +1,31 @@
-// コード生成テスト
-//	if, while, input, outputの文法が自分のと異なる場合は、
-//	自分の文法に合うように直して使うこと。
-//
-//	ラベルを置く位置、分岐命令の後ろのジャンプ先ラベル名が合っているか確認する
-
 int a;
+int b();
+int c();
+int* d();
+void e(int,int*);
 
-if (false) {
-   a=3;
+func int b() {
+	int x,a;
+	if (true) {
+		return a;
+	} else {
+		return 6;
+	}
 }
 
-if (true) {
-   a=1;
-} else {
-   a=2;
+func void e(int g, int *h) {
+	output a;
+	return;
 }
 
-while (true) {
-   input a;
-   while (false) {
-      output a;
-   }
-   a=4;
+func int c() {
+	int c[20], i;
+	int *j;
+	a = 2;
+//	b = a + 3;
+//	c[19] = b + 5;
+	output c[19];
+	call e(i,j);
+	a = b() + b();
+	return 1 * 3 + a;
 }
-

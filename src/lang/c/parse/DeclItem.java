@@ -5,85 +5,113 @@ import java.io.PrintStream;
 import lang.FatalErrorException;
 import lang.c.CParseContext;
 import lang.c.CParseRule;
+import lang.c.CSymbolTable;
 import lang.c.CSymbolTableEntry;
 import lang.c.CToken;
 import lang.c.CTokenizer;
 import lang.c.CType;
 
-public class DeclItem extends CParseRule
-{
-    // declItem ::= [ MULT ] IDENT [ LBRA NUM RBRA]
+public class DeclItem extends CParseRule {
 
-	private CToken ident;
-    private CToken number;
-    boolean isPointer = false;
-    boolean isArray = false;
+	// declItem ::= [ MULT ] IDENT [ LBRA NUMBER RBRA | LPAR [ typeList ] RPAR ]
 
-    public DeclItem(CParseContext pcx) {
-    }
-    public static boolean isFirst(CToken tk) {
-        return tk.getType() == CToken.TK_MULT || tk.getType() == CToken.TK_IDENT;
-    }
+	private CParseRule typelist;
+	private CSymbolTableEntry cSymbolTableEntry;
 
-    public void parse(CParseContext pcx) throws FatalErrorException {
-        CTokenizer ct = pcx.getTokenizer();
-        CToken tk = ct.getCurrentToken(pcx);
+	private String name = null;
+	private CType type;
+	private int size = 1;
+	private boolean constp = false;
 
-        if (tk.getType() == CToken.TK_MULT) {
-            isPointer = true;
-            tk = ct.getNextToken(pcx);
-        }
+	public DeclItem(CParseContext pcx) {
+	}
 
-        if (tk.getType() == CToken.TK_IDENT) {
-            if (pcx.getTable().checkTable(tk.getText()) != null) {
-                pcx.fatalError(tk.toExplainString() + "既に登録されています.");
-            }
-            ident = tk;
-            tk = ct.getNextToken(pcx);
-        } else {
-            pcx.fatalError("'IDENT'が来ます.");
-        }
+	public static boolean isFirst(CToken tk) {
+		return tk.getType() == CToken.TK_MULT || tk.getType() == CToken.TK_IDENT;
+	}
 
-        if (tk.getType() == CToken.TK_LBRA) {
-            isArray = true;
-            tk = ct.getNextToken(pcx);
-            if (tk.getType() == CToken.TK_NUM) {
-                number = tk;
-                tk = ct.getNextToken(pcx);
-            }
-            if (tk.getType() != CToken.TK_RBRA) {
-            	pcx.fatalError("']'が来ます.");
-            }
-            tk = ct.getNextToken(pcx);
-        }
+	public void parse(CParseContext pcx) throws FatalErrorException {
+		CTokenizer ct = pcx.getTokenizer();
+		CToken tk = ct.getCurrentToken(pcx);
+		CSymbolTable cst = pcx.getTable();
 
-        if (isPointer == true && isArray == true) {
-            this.setCType(CType.getCType(CType.T_parray));
-            pcx.getTable().addToTable(ident.getText(), new CSymbolTableEntry(getCType(), number.getIntValue(), false, true, 0));
-        } else if (isPointer == true && isArray == false) {
-            this.setCType(CType.getCType(CType.T_pint));
-            pcx.getTable().addToTable(ident.getText(), new CSymbolTableEntry(getCType(), 0, false, true, 0));
-        } else if (isPointer == false && isArray == true) {
-            this.setCType(CType.getCType(CType.T_iarray));
-            pcx.getTable().addToTable(ident.getText(), new CSymbolTableEntry(getCType(), number.getIntValue(), false, true, 0));
-        } else if (isPointer == false && isArray == false) {
-            this.setCType(CType.getCType(CType.T_int));
-            pcx.getTable().addToTable(ident.getText(), new CSymbolTableEntry(getCType(), 1, false, true, 0));
-        }
-    }
+		if (tk.getType() == CToken.TK_MULT) {
+			type = CType.getCType(CType.T_pint);
+			tk = ct.getNextToken(pcx);
+		} else {
+			type = CType.getCType(CType.T_int);
+		}
 
-    public void semanticCheck(CParseContext pcx) throws FatalErrorException {
-    }
+		if (tk.getType() == CToken.TK_IDENT) {
+			name = tk.getText();
+			tk = ct.getNextToken(pcx);
+		} else {
+			pcx.fatalError(tk.toExplainString() + "識別子がありません.");
+		}
 
-    public void codeGen(CParseContext pcx) throws FatalErrorException {
-        PrintStream o = pcx.getIOContext().getOutStream();
-        o.println(";;; declItem starts");
-        if(ident != null && isArray == false) {
-            o.println(ident.getText() + ":\t .WORD 0 \t\t; declItem: 変数用の領域を確保");
-        }
-        if (ident != null && isArray == true) {
-            o.println(ident.getText() + ":\t .BLKW " + number.getIntValue() + "\t\t; declItem: 変数用の領域を確保");
-        }
-        o.println(";;; declItem completes");
-    }
+		if (tk.getType() == CToken.TK_LBRA) {
+			tk = ct.getNextToken(pcx);
+
+			if (tk.getType() == CToken.TK_NUM) {
+				size = tk.getIntValue();
+				tk = ct.getNextToken(pcx);
+
+				if (tk.getType() == CToken.TK_RBRA) {
+					tk = ct.getNextToken(pcx);
+				} else {
+					pcx.fatalError(tk.toExplainString() + "要素数の後に']'がありません.");
+				}
+			} else {
+				pcx.fatalError(tk.toExplainString() + "'['の後に要素数が指定されていません");
+			}
+
+			if (type == CType.getCType(CType.T_pint)) {
+				type = CType.getCType(CType.T_parray);
+			} else {
+				type = CType.getCType(CType.T_iarray);
+			}
+		} else if (tk.getType() == CToken.TK_LPAR) {
+			tk = ct.getNextToken(pcx);
+
+			if (TypeList.isFirst(tk)) {
+				typelist = new TypeList(pcx);
+				typelist.parse(pcx);
+			}
+
+			tk = ct.getCurrentToken(pcx);
+
+			if (tk.getType() == CToken.TK_RPAR) {
+				size = 0;
+				constp = true;
+				tk = ct.getNextToken(pcx);
+			} else {
+				pcx.fatalError(tk.toExplainString() + "')'がありません.");
+			}
+		}
+		cSymbolTableEntry = cst.registerTable(name, type, size, constp);
+
+		if (cSymbolTableEntry == null) {
+			pcx.fatalError(name + "は既に定義されています.");
+		}
+
+		if (typelist != null) {
+			cSymbolTableEntry.setList(((TypeList)typelist).getList());
+		}
+	}
+
+	public void semanticCheck(CParseContext pcx) throws FatalErrorException {
+	}
+
+	public void codeGen(CParseContext pcx) throws FatalErrorException {
+		PrintStream o = pcx.getIOContext().getOutStream();
+		o.println(";;; declItem starts");
+		if (cSymbolTableEntry.isGlobal() && cSymbolTableEntry.getSize() != 0) {
+			if (type == CType.getCType(CType.T_int) || type == CType.getCType(CType.T_pint)) {
+				o.println(name + ":\t.WORD\t0\t	; DeclItem: 変数の領域を確保する.");
+			} else {
+				o.println(name + ":\t.BLKW\t" + size + "\t	; DeclItem: 変数の領域を確保する.");
+			}
+		}
+		o.println(";;; declItem completes");
+	}
 }

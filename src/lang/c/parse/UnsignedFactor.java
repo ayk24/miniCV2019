@@ -1,4 +1,4 @@
-package lang.c.parse;
+ package lang.c.parse;
 
 import java.io.PrintStream;
 
@@ -12,81 +12,60 @@ public class UnsignedFactor extends CParseRule {
 
 	// unsignedFactor ::= factorAmp | number | LPAR expression RPAR | addressToValue
 
-	private CParseRule factoramp;
-	private CParseRule number;
-	private CParseRule expression;
-	private CParseRule addressToValue;
+	private CParseRule cParseRule;
 
 	public UnsignedFactor(CParseContext pcx) {
 	}
 
 	public static boolean isFirst(CToken tk) {
-		return Number.isFirst(tk) || FactorAmp.isFirst(tk) ||
-				tk.getType() == CToken.TK_LPAR || AddressToValue.isFirst(tk);
+		return FactorAmp.isFirst(tk) || Number.isFirst(tk)
+				|| tk.getType() == CToken.TK_LPAR || AddressToValue.isFirst(tk)
+				|| CallFunc.isFirst(tk);	// ほんと?
 	}
 
 	public void parse(CParseContext pcx) throws FatalErrorException {
-		// ここにやってくるときは、必ずisFirst()が満たされている
 		CTokenizer ct = pcx.getTokenizer();
 		CToken tk = ct.getCurrentToken(pcx);
 
-		if(FactorAmp.isFirst(tk)){
-			factoramp = new FactorAmp(pcx);
-			factoramp.parse(pcx);
-		} else if(Number.isFirst(tk)) {
-			number = new Number(pcx);
-			number.parse(pcx);
-		} else if(tk.getType() == CToken.TK_LPAR) {
+		if(FactorAmp.isFirst(tk)) {
+			cParseRule = new FactorAmp(pcx);
+			cParseRule.parse(pcx);
+		} else if (Number.isFirst(tk)) {
+			cParseRule = new Number(pcx);
+			cParseRule.parse(pcx);
+		} else if (tk.getType() == CToken.TK_LPAR) {
 			tk = ct.getNextToken(pcx);
-			expression = new Expression(pcx);
-			expression.parse(pcx);
-			tk = ct.getCurrentToken(pcx);
-
-			if(tk.getType() != CToken.TK_RPAR){
-				pcx.fatalError("')'がありません.");
+			if (Expression.isFirst(tk)) {
+				cParseRule = new Expression(pcx);
+				cParseRule.parse(pcx);
+				tk = ct.getCurrentToken(pcx);
+				if (tk.getType() == CToken.TK_RPAR) {
+					ct.getNextToken(pcx);
+				} else {
+					cParseRule = null;
+				}
 			}
-
-			tk = ct.getNextToken(pcx);
-
 		} else if (AddressToValue.isFirst(tk)) {
-            addressToValue = new AddressToValue(pcx);
-            addressToValue.parse(pcx);
+			cParseRule = new AddressToValue(pcx);
+			cParseRule.parse(pcx);
+		} else if (CallFunc.isFirst(tk)) {
+			cParseRule = new CallFunc(pcx);
+			cParseRule.parse(pcx);
 		}
 	}
 
 	public void semanticCheck(CParseContext pcx) throws FatalErrorException {
-		if (number != null) {
-			number.semanticCheck(pcx);
-			setCType(number.getCType());			// number の型をそのままコピー
-			setConstant(number.isConstant());		// number は常に定数
-		}
-
-		if (factoramp != null){
-			factoramp.semanticCheck(pcx);
-			setCType(factoramp.getCType());				// factoramp の型をそのままコピー
-			setConstant(factoramp.isConstant());		// factoramp は常に定数
-		}
-
-		if (expression != null){
-			expression.semanticCheck(pcx);
-			setCType(expression.getCType());			// expresssion の型をそのままコピー
-			setConstant(expression.isConstant());		// expresssion は常に定数
-		}
-
-		if (addressToValue != null){
-			addressToValue.semanticCheck(pcx);
-			setCType(addressToValue.getCType());		// addressToValue の型をそのままコピー
-			setConstant(addressToValue.isConstant());	// addressToValue は常に定数
+		if (cParseRule != null) {
+			cParseRule.semanticCheck(pcx);
+			setCType(cParseRule.getCType());
+			setConstant(cParseRule.isConstant());
 		}
 	}
 
 	public void codeGen(CParseContext pcx) throws FatalErrorException {
 		PrintStream o = pcx.getIOContext().getOutStream();
-		o.println(";;; unsignedfactor starts");
-		if (number != null) { number.codeGen(pcx); }
-		if (factoramp != null) { factoramp.codeGen(pcx); }
-		if (expression != null) { expression.codeGen(pcx); }
-		if (addressToValue != null) { addressToValue.codeGen(pcx); }
-		o.println(";;; unsignedfactor completes");
+		o.println(";;; unsignedFactor starts");
+		if (cParseRule != null) { cParseRule.codeGen(pcx);}
+		o.println(";;; unsignedFactor completes");
 	}
 }

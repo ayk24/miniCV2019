@@ -78,7 +78,6 @@ class TermMult extends CParseRule {
 	}
 
 	public void parse(CParseContext pcx) throws FatalErrorException {
-		// ここにやってくるときは、必ずisFirst()が満たされている
 		CTokenizer ct = pcx.getTokenizer();
 		op = ct.getCurrentToken(pcx);
 
@@ -91,17 +90,16 @@ class TermMult extends CParseRule {
 		}
 	}
 
-
 	public void semanticCheck(CParseContext pcx) throws FatalErrorException {
-		// かけ算の型計算規則
+		// 掛け算の型計算規則
 		final int s[][] = {
-				//		T_err			T_int			T_pint
-				{	CType.T_err,	CType.T_err,	CType.T_err},	// T_err
-				{	CType.T_err,	CType.T_int,	CType.T_err},	// T_int
-				{	CType.T_err,	CType.T_err,	CType.T_err},	// T_pint
-
+		//		T_err			T_int			T_pint			T_ary			T_pary
+			{	CType.T_err,	CType.T_err, 	CType.T_err,	CType.T_err,	CType.T_err},	// T_err
+			{	CType.T_err,	CType.T_int, 	CType.T_err,	CType.T_err,	CType.T_err},	// T_int
+			{	CType.T_err,	CType.T_err,	CType.T_err,	CType.T_err,	CType.T_err},	// T_pint
+			{	CType.T_err,	CType.T_err,	CType.T_err,	CType.T_err,	CType.T_err},	// T_ary
+			{	CType.T_err,	CType.T_err,	CType.T_err,	CType.T_err,	CType.T_err},	// T_pary
 		};
-
 		if (left != null && right != null) {
 			left.semanticCheck(pcx);
 			right.semanticCheck(pcx);
@@ -109,10 +107,10 @@ class TermMult extends CParseRule {
 			int rt = right.getCType().getType();	// *の右辺の型
 			int nt = s[lt][rt];						// 規則による型計算
 			if (nt == CType.T_err) {
-				pcx.fatalError(op.toExplainString() + "左辺の型[" + left.getCType().toString() + "]と右辺の型[" + right.getCType().toString() + "]はかけられません");
+				pcx.fatalError(op.toExplainString() + "左辺の型[" + left.getCType().toString() + "]と右辺の型[" + right.getCType().toString() + "]は掛けられません");
 			}
 			this.setCType(CType.getCType(nt));
-			this.setConstant(left.isConstant() && right.isConstant());	// *の左右両方が定数のときだけ定数			// *の左右両方が定数のときだけ定数
+			this.setConstant(left.isConstant() && right.isConstant());	// *の左右両方が定数のときだけ定数
 		}
 	}
 
@@ -159,16 +157,15 @@ class TermDiv extends CParseRule {
 		}
 	}
 
-
 	public void semanticCheck(CParseContext pcx) throws FatalErrorException {
 		// 割り算の型計算規則
-
 		final int s[][] = {
-				//		T_err			T_int			T_pint
-				{	CType.T_err,	CType.T_err,	CType.T_err},	// T_err
-				{	CType.T_err,	CType.T_int,	CType.T_err},	// T_int
-				{	CType.T_err,	CType.T_err,	CType.T_err},	// T_pint
-
+		//		T_err			T_int			T_pint			T_ary			T_pary
+			{	CType.T_err,	CType.T_err, 	CType.T_err,	CType.T_err,	CType.T_err},	// T_err
+			{	CType.T_err,	CType.T_int, 	CType.T_err,	CType.T_err,	CType.T_err},	// T_int
+			{	CType.T_err,	CType.T_err,	CType.T_err,	CType.T_err,	CType.T_err},	// T_pint
+			{	CType.T_err,	CType.T_err,	CType.T_err,	CType.T_err,	CType.T_err},	// T_ary
+			{	CType.T_err,	CType.T_err,	CType.T_err,	CType.T_err,	CType.T_err},	// T_pary
 		};
 		if (left != null && right != null) {
 			left.semanticCheck(pcx);
@@ -197,5 +194,3 @@ class TermDiv extends CParseRule {
 		o.println(";;; termdiv completes");
 	}
 }
-
-

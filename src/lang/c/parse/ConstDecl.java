@@ -38,6 +38,8 @@ public class ConstDecl extends CParseRule {
 					constItem.parse(pcx);
 					constList.add(constItem);
 					tk = ct.getCurrentToken(pcx);
+				} else {
+					pcx.fatalError(tk.toExplainString() + "宣言する識別子がありません.");
 				}
 
 				while (tk.getType() == CToken.TK_COMMA){
@@ -48,23 +50,26 @@ public class ConstDecl extends CParseRule {
 						constList.add(constItem);
 						tk = ct.getCurrentToken(pcx);
 					} else {
-						pcx.fatalError("','の次には'constItem'が来ます.");
+						pcx.fatalError(tk.toExplainString() + "','の次には'constItem'が来ます.");
 					}
 				}
 			}else{
-				pcx.fatalError("'const'の次には'int'が来ます.");
+				pcx.fatalError(tk.toExplainString() + "'const'の次には'int'が来ます.");
 			}
 
 			if(tk.getType() == CToken.TK_SEMI){
 				tk = ct.getNextToken(pcx);
 			} else {
-				pcx.fatalError("';'がありません.");
+				pcx.fatalError(tk.toExplainString() + "';'がありません.");
 			}
 		}
 
 	}
 
 	public void semanticCheck(CParseContext pcx) throws FatalErrorException {
+		for(CParseRule constItem : constList){
+			constItem.semanticCheck(pcx);
+		}
 	}
 
 	public void codeGen(CParseContext pcx) throws FatalErrorException {

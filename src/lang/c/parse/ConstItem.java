@@ -5,6 +5,7 @@ import java.io.PrintStream;
 import lang.FatalErrorException;
 import lang.c.CParseContext;
 import lang.c.CParseRule;
+import lang.c.CSymbolTable;
 import lang.c.CSymbolTableEntry;
 import lang.c.CToken;
 import lang.c.CTokenizer;
@@ -12,80 +13,87 @@ import lang.c.CType;
 
 public class ConstItem extends CParseRule {
 
-    // constItem ::= [ MULT ] IDENT ASSIGN [ AMP ] NUM
+	// constItem ::= [ MULT ] IDENT ASSIGN [ AMP ] NUM
 
-	private CToken ident;
-    private CToken number;
-    boolean isPointer = false;
+	private CSymbolTableEntry cSymbolTableEntry;
 
-    public ConstItem(CParseContext pcx){
-    }
-    public static boolean isFirst(CToken tk){
-    	return tk.getType() == CToken.TK_MULT || tk.getType() == CToken.TK_IDENT;
-    }
+	private String name = null;
+	private CType type;
+	private int size = 1;
+	private int addr = 0;
+	private boolean constp = true;
 
-    public void parse(CParseContext pcx) throws FatalErrorException {
-        CTokenizer ct = pcx.getTokenizer();
-        CToken tk = ct.getCurrentToken(pcx);
+	public ConstItem(CParseContext pcx) {
+	}
 
-        if(tk.getType() == CToken.TK_MULT){
-            isPointer = true;
-            tk = ct.getNextToken(pcx);
-        }
+	public static boolean isFirst(CToken tk) {
+		return tk.getType() == CToken.TK_MULT || tk.getType() == CToken.TK_IDENT;
+	}
 
-        if(tk.getType() == CToken.TK_IDENT){
-            if(pcx.getTable().checkTable(tk.getText()) != null){
-                pcx.fatalError(tk.toExplainString() + "既に登録されています");
-            }
-            ident = tk;
-            tk = ct.getNextToken(pcx);
+	public void parse(CParseContext pcx) throws FatalErrorException {
+		CTokenizer ct = pcx.getTokenizer();
+		CToken tk = ct.getCurrentToken(pcx);
+		CSymbolTable cSymbolTable = pcx.getTable();
 
-            if(tk.getType() == CToken.TK_ASSIGN){
-                tk = ct.getNextToken(pcx);
+		if (tk.getType() == CToken.TK_MULT) {
+			type = CType.getCType(CType.T_pint);
+			tk = ct.getNextToken(pcx);
+		} else {
+			type = CType.getCType(CType.T_int);
+		}
 
-                if(isPointer == true){
-                    if(tk.getType() == CToken.TK_AMP){
-                        tk = ct.getNextToken(pcx);
-                    } else {
-                        pcx.fatalError("左辺が'*'なので, 右辺は'&'でなければなりません.");
-                    }
-                } else {
-                    if(tk.getType() == CToken.TK_AMP){
-                        pcx.fatalError("左辺が'*'でないので, 右辺に'&'は必要ありません.");
-                    }
-                }
+		if (tk.getType() == CToken.TK_IDENT) {
+			name = tk.getText();
+			tk = ct.getNextToken(pcx);
 
-                if(tk.getType() == CToken.TK_NUM){
-                    number = tk;
-                    tk = ct.getNextToken(pcx);
-                }else{
-                    pcx.fatalError("右辺がありません.");
-                }
-            }else if(tk.getType() == CToken.TK_NUM){
-            	pcx.fatalError("'='がありません.");
-            }else{
-                pcx.fatalError("初期値の定義がされていません.");
-            }
+			if (tk.getType() == CToken.TK_ASSIGN) {
+				tk = ct.getNextToken(pcx);
 
-            if(isPointer == true){
-                this.setCType(CType.getCType(CType.T_pint));
-                pcx.getTable().addToTable(ident.getText(), new CSymbolTableEntry(getCType(), 0, true, true, 0));
-            } else if(isPointer == false){
-                this.setCType(CType.getCType(CType.T_int));
-                pcx.getTable().addToTable(ident.getText(), new CSymbolTableEntry(getCType(), 1, true, true, 0));
-            }
-        }
-    }
+				if (tk.getType() == CToken.TK_AMP) {
+					if (type != CType.getCType(CType.T_pint)) {
+						pcx.fatalError(tk.toExplainString() + "左辺と右辺の型が異なります.");
+					}
+					tk = ct.getNextToken(pcx);
+				} else {
+					if (type != CType.getCType(CType.T_int)) {
+						pcx.fatalError(tk.toExplainString() + "左辺と右辺の型が異なります.");
+					}
+				}
 
-    public void semanticCheck(CParseContext pcx) throws FatalErrorException {
-    }
+				if (tk.getType() == CToken.TK_NUM) {
+					size = tk.getIntValue();
+					tk = ct.getNextToken(pcx);
+				} else {
+					pcx.fatalError(tk.toExplainString() + "'='の後に定数がありません.");
+				}
+			} else {
+				pcx.fatalError(tk.toExplainString() + "識別子の後に'='がありません.");
+			}
+		} else {
+			pcx.fatalError(tk.toExplainString() + "'*'の後に識別子がありません.");
+		}
 
-    public void codeGen(CParseContext pcx) throws FatalErrorException {
-        PrintStream o = pcx.getIOContext().getOutStream();
-        o.println(";;; cnstItem starts");
-        if(ident != null){
-            o.println(ident.getText() + ":\t.WORD " + number.getIntValue() + " \t\t; constItem: 初期値<" + number.getIntValue() + ">を設定"); // .WORD 0
-        }
-        o.println(";;;  completes");
-    }
+		addr = cSymbolTable.getAddrsize();
+		cSymbolTableEntry = cSymbolTable.registerTable(name, type, size, constp);
+
+		if (cSymbolTableEntry == null) {
+			pcx.fatalError(name + "は既に定義されています.");
+		}
+	}
+
+	public void semanticCheck(CParseContext pcx) throws FatalErrorException {
+	}
+
+	public void codeGen(CParseContext pcx) throws FatalErrorException {
+		PrintStream o = pcx.getIOContext().getOutStream();
+		o.println(";;; constItem starts");
+		if (cSymbolTableEntry.isGlobal()) {
+			o.println(name + ":\t.WORD\t" + size + "\t; ConstItem: 定数の領域確保");
+		} else {
+			o.println("\tMOV\tR4, R0\t; ConstItem: 局所定数の初期化");
+			o.println("\tADD\t#" + addr +", R0\t; ConstItem:");
+			o.println("\tMOV\t#" + size + ", (R0)\t; ConstItem:");
+		}
+		o.println(";;; constItem completes");
+	}
 }
