@@ -8,49 +8,43 @@ import lang.c.CParseRule;
 import lang.c.CToken;
 import lang.c.CTokenizer;
 
-public class Condition extends CParseRule {
+public class ConditionFactor extends CParseRule {
 
-	// condition ::= conditionTerm { conditionOR }
+	// conditionFactor ::= conditionNOT | conditionTruth
 
 	private CParseRule condition;
 
-	public Condition(CParseContext pcx) {
+	public ConditionFactor(CParseContext pcx) {
 	}
 
 	public static boolean isFirst(CToken tk) {
-		return ConditionTerm.isFirst(tk);
+		return ConditionNOT.isFirst(tk) || ConditionTruth.isFirst(tk);
 	}
 
 	public void parse(CParseContext pcx) throws FatalErrorException {
-		CParseRule conditionTerm = null, list = null;
-
-		conditionTerm = new ConditionTerm(pcx);
-		conditionTerm.parse(pcx);
-
 		CTokenizer ct = pcx.getTokenizer();
 		CToken tk = ct.getCurrentToken(pcx);
 
-		while (ConditionOR.isFirst(tk)) {
-			list = new ConditionOR(pcx, conditionTerm);
-			list.parse(pcx);
-			conditionTerm = list;
-			tk = ct.getCurrentToken(pcx);
+		if (ConditionNOT.isFirst(tk)) {
+			condition = new ConditionNOT(pcx);
+			condition.parse(pcx);
+		} else if (ConditionTruth.isFirst(tk)) {
+			condition = new ConditionTruth(pcx);
+			condition.parse(pcx);
 		}
-		condition = conditionTerm;
 	}
 
 	public void semanticCheck(CParseContext pcx) throws FatalErrorException {
 		if (condition != null) {
 			condition.semanticCheck(pcx);
-			this.setCType(condition.getCType());
-			this.setConstant(condition.isConstant());
+			setCType(condition.getCType());
+			setConstant(condition.isConstant());
 		}
 	}
-
 	public void codeGen(CParseContext pcx) throws FatalErrorException {
 		PrintStream o = pcx.getIOContext().getOutStream();
-		o.println(";;; condition starts");
-		if (condition != null) condition.codeGen(pcx);
-		o.println(";;; condition completes");
+		o.println(";;; conditionFactor starts");
+		if (condition != null) { condition.codeGen(pcx); }
+		o.println(";;; conditionFactor completes");
 	}
 }

@@ -1,31 +1,18 @@
-int a;
-int b();
-int c();
-int* d();
-void e(int,int*);
+int main();
 
-func int b() {
-	int x,a;
-	if (true) {
-		return a;
-	} else {
-		return 6;
-	}
-}
-
-func void e(int g, int *h) {
-	output a;
-	return;
-}
-
-func int c() {
-	int c[20], i;
-	int *j;
-	a = 2;
-//	b = a + 3;
-//	c[19] = b + 5;
-	output c[19];
-	call e(i,j);
-	a = b() + b();
-	return 1 * 3 + a;
+func int main() {
+  int a, b, c;
+  a = 3;
+  b = 1;
+  // 演算子の優先順位を確認
+  if (true || false && a == 2) {
+    a = 4;
+  // カッコによる優先順位の変化を確認
+  } else if (!(true || false) && a == 3) {
+    a = 5;
+  // 複数の論理否定への対応を確認
+  } else if (!(!true || !(a > 4 || false) && !(!(!(b <= 5))))) {
+    a = 6;
+  }
+  return 0;
 }
