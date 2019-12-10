@@ -26,16 +26,17 @@ public class Array extends CParseRule {
 		CToken tk = ct.getNextToken(pcx);
 
 		if(Expression.isFirst(tk)) {
+
 			expression = new Expression(pcx);
 			expression.parse(pcx);
 
 			tk = ct.getCurrentToken(pcx);
 
 			if(tk.getType() != CToken.TK_RBRA) {
-				pcx.fatalError("']'がありません.");
+				tk = ct.getNextToken(pcx);
+			} else {
+				pcx.warning(tk.toExplainString() + "']'がないので補いました.");
 			}
-
-			tk = ct.getNextToken(pcx);
 		}
 	}
 
@@ -44,7 +45,7 @@ public class Array extends CParseRule {
 			expression.semanticCheck(pcx);
 
 			if(expression.getCType() != CType.getCType(CType.T_int)){
-				pcx.fatalError("[]内はint型ででなければいけません.");
+				pcx.warning("[]内はint型ででなければいけません.");
 			}
 
 			this.setCType(expression.getCType());

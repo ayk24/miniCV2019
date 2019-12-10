@@ -91,7 +91,7 @@ class PrimaryMult extends CParseRule {
 			variable = new Variable(pcx);
 			variable.parse(pcx);
 		}else{
-			pcx.fatalError("変数でないものをポインタ参照しようとしています.");
+			pcx.warning(tk.toExplainString() + "変数でないものをポインタ参照しようとしています.");
 		}
 
 	}
@@ -103,7 +103,7 @@ class PrimaryMult extends CParseRule {
 			setConstant(variable.isConstant());
 		}
 		if(variable.getCType().getType() == CType.T_int || variable.getCType().getType() == CType.T_iarray) {
-			pcx.fatalError("ポインタ参照の変数はint型やint型の配列ではいけません.");
+			pcx.warning("ポインタ参照の変数はint型やint型の配列ではいけません.");
 		}else if(variable.getCType().getType() == CType.T_pint){
             this.setCType(CType.getCType(CType.T_int));
         }

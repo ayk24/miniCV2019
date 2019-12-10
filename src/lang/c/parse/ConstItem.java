@@ -3,6 +3,7 @@ package lang.c.parse;
 import java.io.PrintStream;
 
 import lang.FatalErrorException;
+import lang.RecoverableErrorException;
 import lang.c.CParseContext;
 import lang.c.CParseRule;
 import lang.c.CSymbolTable;
@@ -42,42 +43,47 @@ public class ConstItem extends CParseRule {
 			type = CType.getCType(CType.T_int);
 		}
 
-		if (tk.getType() == CToken.TK_IDENT) {
-			name = tk.getText();
-			tk = ct.getNextToken(pcx);
-
-			if (tk.getType() == CToken.TK_ASSIGN) {
+		try {
+			if (tk.getType() == CToken.TK_IDENT) {
+				name = tk.getText();
 				tk = ct.getNextToken(pcx);
 
-				if (tk.getType() == CToken.TK_AMP) {
-					if (type != CType.getCType(CType.T_pint)) {
-						pcx.fatalError(tk.toExplainString() + "左辺と右辺の型が異なります.");
-					}
+				if (tk.getType() == CToken.TK_ASSIGN) {
 					tk = ct.getNextToken(pcx);
-				} else {
-					if (type != CType.getCType(CType.T_int)) {
-						pcx.fatalError(tk.toExplainString() + "左辺と右辺の型が異なります.");
-					}
-				}
 
-				if (tk.getType() == CToken.TK_NUM) {
-					size = tk.getIntValue();
-					tk = ct.getNextToken(pcx);
+					if (tk.getType() == CToken.TK_AMP) {
+						if (type != CType.getCType(CType.T_pint)) {
+							pcx.warning(tk.toExplainString() + "左辺と右辺の型が異なります.");
+						}
+						tk = ct.getNextToken(pcx);
+					} else {
+						if (type != CType.getCType(CType.T_int)) {
+							pcx.warning(tk.toExplainString() + "左辺と右辺の型が異なります.");
+						}
+					}
+
+					if (tk.getType() == CToken.TK_NUM) {
+						size = tk.getIntValue();
+						tk = ct.getNextToken(pcx);
+					} else {
+						pcx.recoverableError(tk.toExplainString() + "'='の後に定数がありません.");
+					}
 				} else {
-					pcx.fatalError(tk.toExplainString() + "'='の後に定数がありません.");
+					pcx.warning(tk.toExplainString() + "識別子の後に'='がないので補いました.");
 				}
 			} else {
-				pcx.fatalError(tk.toExplainString() + "識別子の後に'='がありません.");
+				pcx.recoverableError(tk.toExplainString() + "'*'の後に識別子がありません.");
 			}
-		} else {
-			pcx.fatalError(tk.toExplainString() + "'*'の後に識別子がありません.");
-		}
 
-		addr = cSymbolTable.getAddrsize();
-		cSymbolTableEntry = cSymbolTable.registerTable(name, type, size, constp);
+			addr = cSymbolTable.getAddrsize();
+			cSymbolTableEntry = cSymbolTable.registerTable(name, type, size, constp);
 
-		if (cSymbolTableEntry == null) {
-			pcx.fatalError(name + "は既に定義されています.");
+			if (cSymbolTableEntry == null) {
+				pcx.warning(name + "は既に定義されています.");
+			}
+		} catch (RecoverableErrorException e) {
+			ct.skipTo(pcx, CToken.TK_SEMI, CToken.TK_RCUR);
+			tk = ct.getNextToken(pcx);
 		}
 	}
 

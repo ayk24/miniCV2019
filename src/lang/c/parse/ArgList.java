@@ -3,6 +3,7 @@ package lang.c.parse;
 import java.util.ArrayList;
 
 import lang.FatalErrorException;
+import lang.RecoverableErrorException;
 import lang.c.CParseContext;
 import lang.c.CParseRule;
 import lang.c.CToken;
@@ -39,14 +40,19 @@ public class ArgList extends CParseRule {
 		tk = ct.getCurrentToken(pcx);
 
 		while (tk.getType() == CToken.TK_COMMA) {
-			tk = ct.getNextToken(pcx);
+			try {
+				tk = ct.getNextToken(pcx);
 
-			if (ArgItem.isFirst(tk)) {
-				argItem = new ArgItem(pcx, cTypeList);
-				argItem.parse(pcx);
-				argItemList.add(argItem);
-			} else {
-				pcx.fatalError(tk.toExplainString() + "引数がありません.");
+				if (ArgItem.isFirst(tk)) {
+					argItem = new ArgItem(pcx, cTypeList);
+					argItem.parse(pcx);
+					argItemList.add(argItem);
+				} else {
+					pcx.recoverableError(tk.toExplainString() + "引数がありません.");
+				}
+			} catch (RecoverableErrorException e) {
+				ct.skipTo(pcx, CToken.TK_SEMI, CToken.TK_RCUR);
+				tk = ct.getNextToken(pcx);
 			}
 
 			tk = ct.getCurrentToken(pcx);

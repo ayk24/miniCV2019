@@ -4,6 +4,7 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 
 import lang.FatalErrorException;
+import lang.RecoverableErrorException;
 import lang.c.CParseContext;
 import lang.c.CParseRule;
 import lang.c.CSymbolTable;
@@ -34,55 +35,61 @@ public class StatementCall extends CParseRule {
 		CToken tk = ct.getNextToken(pcx);
 		CSymbolTable cSymbolTable = pcx.getTable();
 
-		if (Ident.isFirst(tk)) {
-			idtk = tk;
-			ident = new Ident(pcx);
-			ident.parse(pcx);
-		} else {
-			pcx.fatalError(tk.toExplainString() + "識別子がありません.");
-		}
+		try {
+			if (Ident.isFirst(tk)) {
+				idtk = tk;
+				ident = new Ident(pcx);
+				ident.parse(pcx);
+			} else {
+				pcx.recoverableError(tk.toExplainString() + "識別子がありません.");
+			}
 
-		tk = ct.getCurrentToken(pcx);
-
-		if (tk.getType() == CToken.TK_LPAR) {
-			tk = ct.getNextToken(pcx);
-		} else {
-			pcx.fatalError(tk.toExplainString() + "'('がありません.");
-		}
-
-		cSymbolTableEntry = cSymbolTable.searchFunc(idtk.getText());
-
-		if (Expression.isFirst(tk)) {
-			expression = new Expression(pcx);
-			expression.parse(pcx);
-			expressionList.add(expression);
 			tk = ct.getCurrentToken(pcx);
 
-			while (tk.getType() == CToken.TK_COMMA) {
+			if (tk.getType() == CToken.TK_LPAR) {
 				tk = ct.getNextToken(pcx);
-				if (Expression.isFirst(tk)) {
-					expression = new Expression(pcx);
-					expression.parse(pcx);
-					expressionList.add(expression);
-				} else {
-					pcx.fatalError(tk.toExplainString() + "引数がありません.");
-				}
-				tk = ct.getCurrentToken(pcx);
+			} else {
+				pcx.warning(tk.toExplainString() + "'('がないので補いました.");
 			}
-		}
 
-		if (tk.getType() == CToken.TK_RPAR) {
-			tk = ct.getNextToken(pcx);
-		} else {
-			pcx.fatalError(tk.toExplainString() + "')'がありません.");
-		}
+			cSymbolTableEntry = cSymbolTable.searchFunc(idtk.getText());
 
-		if (tk.getType() == CToken.TK_SEMI) {
+			if (Expression.isFirst(tk)) {
+				expression = new Expression(pcx);
+				expression.parse(pcx);
+				expressionList.add(expression);
+				tk = ct.getCurrentToken(pcx);
+
+				while (tk.getType() == CToken.TK_COMMA) {
+					tk = ct.getNextToken(pcx);
+
+					if (Expression.isFirst(tk)) {
+						expression = new Expression(pcx);
+						expression.parse(pcx);
+						expressionList.add(expression);
+					} else {
+						pcx.recoverableError(tk.toExplainString() + "引数がありません.");
+					}
+					tk = ct.getCurrentToken(pcx);
+				}
+			}
+
+			if (tk.getType() == CToken.TK_RPAR) {
+				tk = ct.getNextToken(pcx);
+			} else {
+				pcx.warning(tk.toExplainString() + "')'が無いので補いました.");
+			}
+
+			if (tk.getType() == CToken.TK_SEMI) {
+				tk = ct.getNextToken(pcx);
+			} else {
+				pcx.warning(tk.toExplainString() + "';'がないので補いました.");
+			}
+			addrSize = cSymbolTable.getAddrsize();
+		} catch (RecoverableErrorException e) {
+			ct.skipTo(pcx, CToken.TK_SEMI, CToken.TK_RCUR);
 			tk = ct.getNextToken(pcx);
-		} else {
-			pcx.fatalError(tk.toExplainString() + "';'がありません.");
 		}
-		addrSize = cSymbolTable.getAddrsize();
 	}
 
 	public void semanticCheck(CParseContext pcx) throws FatalErrorException {
@@ -91,7 +98,7 @@ public class StatementCall extends CParseRule {
 		}
 
 		if (expressionList.size() != cSymbolTableEntry.getList().size()) {
-			pcx.fatalError("プロトタイプ宣言の引数の個数と関数呼び出し時の引数の個数が異なります.");
+			pcx.warning("プロトタイプ宣言の引数の個数と関数呼び出し時の引数の個数が異なります.");
 		}
 
 		int i = 0;
@@ -99,7 +106,7 @@ public class StatementCall extends CParseRule {
 		for (CParseRule expression : expressionList) {
 			expression.semanticCheck(pcx);
 			if (expression.getCType() != cSymbolTableEntry.getList().get(i)) {
-				pcx.fatalError("プロトタイプ宣言の引数の型と関数呼び出し時の引数の型が異なります.");
+				pcx.warning("プロトタイプ宣言の引数の型と関数呼び出し時の引数の型が異なります.");
 			}
 			i++;
 		}

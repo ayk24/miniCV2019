@@ -4,6 +4,7 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 
 import lang.FatalErrorException;
+import lang.RecoverableErrorException;
 import lang.c.CParseContext;
 import lang.c.CParseRule;
 import lang.c.CToken;
@@ -27,42 +28,50 @@ public class ConstDecl extends CParseRule {
 		CTokenizer ct = pcx.getTokenizer();
 		CToken tk = ct.getCurrentToken(pcx);
 
-		if(tk.getType() == CToken.TK_CONST){
-			tk = ct.getNextToken(pcx);
-
-			if(tk.getType() == CToken.TK_INT){
+		try {
+			if(tk.getType() == CToken.TK_CONST){
 				tk = ct.getNextToken(pcx);
 
-				if(ConstItem.isFirst(tk)){
-					constItem = new ConstItem(pcx);
-					constItem.parse(pcx);
-					constList.add(constItem);
-					tk = ct.getCurrentToken(pcx);
-				} else {
-					pcx.fatalError(tk.toExplainString() + "宣言する識別子がありません.");
-				}
-
-				while (tk.getType() == CToken.TK_COMMA){
+				if(tk.getType() == CToken.TK_INT){
 					tk = ct.getNextToken(pcx);
+
 					if(ConstItem.isFirst(tk)){
 						constItem = new ConstItem(pcx);
 						constItem.parse(pcx);
 						constList.add(constItem);
-						tk = ct.getCurrentToken(pcx);
 					} else {
-						pcx.fatalError(tk.toExplainString() + "','の次には'constItem'が来ます.");
+						pcx.recoverableError(tk.toExplainString() + "宣言する識別子がありません.");
 					}
-				}
-			}else{
-				pcx.fatalError(tk.toExplainString() + "'const'の次には'int'が来ます.");
-			}
 
-			if(tk.getType() == CToken.TK_SEMI){
-				tk = ct.getNextToken(pcx);
-			} else {
-				pcx.fatalError(tk.toExplainString() + "';'がありません.");
+					tk = ct.getCurrentToken(pcx);
+
+					while (tk.getType() == CToken.TK_COMMA){
+						tk = ct.getNextToken(pcx);
+
+						if(ConstItem.isFirst(tk)){
+							constItem = new ConstItem(pcx);
+							constItem.parse(pcx);
+							constList.add(constItem);
+						} else {
+							pcx.recoverableError(tk.toExplainString() + "','の次には'constItem'が来ます.");
+						}
+						tk = ct.getCurrentToken(pcx);
+					}
+				}else{
+					pcx.warning(tk.toExplainString() + "'const'の次の'int'が無かったので補いました.");
+				}
+
+				if(tk.getType() == CToken.TK_SEMI){
+					tk = ct.getNextToken(pcx);
+				} else {
+					pcx.fatalError("';'が無かったので補いました.");
+				}
 			}
+		} catch (RecoverableErrorException e) {
+			ct.skipTo(pcx, CToken.TK_SEMI, CToken.TK_RCUR);
+			tk = ct.getNextToken(pcx);
 		}
+
 
 	}
 

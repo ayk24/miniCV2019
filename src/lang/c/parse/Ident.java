@@ -32,7 +32,7 @@ public class Ident extends CParseRule {
 		cSymbolTableEntry = cSymbolTable.search(ident.getText());
 
 		if(cSymbolTableEntry == null) {
-			pcx.fatalError(tk.toExplainString() + "この識別子は宣言されていません.");
+			pcx.warning(tk.toExplainString() + "この識別子は宣言されていません.");
 		}
 
 		tk = ct.getNextToken(pcx);

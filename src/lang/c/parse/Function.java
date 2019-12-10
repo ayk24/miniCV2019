@@ -4,6 +4,7 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 
 import lang.FatalErrorException;
+import lang.RecoverableErrorException;
 import lang.c.CParseContext;
 import lang.c.CParseRule;
 import lang.c.CSymbolTable;
@@ -37,76 +38,81 @@ public class Function extends CParseRule{
 
 		cst.setupLocalSymbolTable();
 
-		if (tk.getType() == CToken.TK_INT) {
-			tk = ct.getNextToken(pcx);
-			funcType = CType.getCType(CType.T_int);
-
-			if (tk.getType() == CToken.TK_MULT) {
+		try {
+			if (tk.getType() == CToken.TK_INT) {
 				tk = ct.getNextToken(pcx);
-				funcType = CType.getCType(CType.T_pint);
+				funcType = CType.getCType(CType.T_int);
+
+				if (tk.getType() == CToken.TK_MULT) {
+					tk = ct.getNextToken(pcx);
+					funcType = CType.getCType(CType.T_pint);
+				}
+
+			} else if (tk.getType() == CToken.TK_VOID) {
+				tk = ct.getNextToken(pcx);
+				funcType = CType.getCType(CType.T_void);
+			} else {
+				pcx.recoverableError(tk.toExplainString() + "型が指定されていません.");
 			}
 
-		} else if (tk.getType() == CToken.TK_VOID) {
+			if (tk.getType() == CToken.TK_IDENT) {
+				ident = tk;
+				tk = ct.getNextToken(pcx);
+			} else {
+				pcx.recoverableError(tk.toExplainString() + "識別子がありません.");
+			}
+
+			if (tk.getType() == CToken.TK_LPAR) {
+				tk = ct.getNextToken(pcx);
+			} else {
+				pcx.warning(tk.toExplainString() + "'('がないので補いました.");
+			}
+
+			if (ArgList.isFirst(tk)) {
+				argList = new ArgList(pcx, argTypeList);
+				argList.parse(pcx);
+			}
+
+			tk = ct.getCurrentToken(pcx);
+
+			if (tk.getType() == CToken.TK_RPAR) {
+				tk = ct.getNextToken(pcx);
+			} else {
+				pcx.warning(tk.toExplainString() + "')'がないので補いました.");
+			}
+
+			cSymbolTableEntry = cst.searchFunc(ident.getText());
+
+			if(cSymbolTableEntry == null) {
+				pcx.warning(tk.toExplainString() + "この関数は定義されていません.");
+			}
+
+			if (Declblock.isFirst(tk)) {
+				declblock = new Declblock(pcx,ident);
+				declblock.parse(pcx);
+				//			cst.showTable();
+			} else {
+				pcx.warning(tk.toExplainString() + "関数の内部がありません");
+			}
+		} catch (RecoverableErrorException e) {
+			ct.skipTo(pcx, CToken.TK_SEMI, CToken.TK_RCUR);
 			tk = ct.getNextToken(pcx);
-			funcType = CType.getCType(CType.T_void);
-		} else {
-			pcx.fatalError(tk.toExplainString() + "型が指定されていません.");
-		}
-
-		if (tk.getType() == CToken.TK_IDENT) {
-			ident = tk;
-			tk = ct.getNextToken(pcx);
-		} else {
-			pcx.fatalError(tk.toExplainString() + "識別子がありません.");
-		}
-
-		if (tk.getType() == CToken.TK_LPAR) {
-			tk = ct.getNextToken(pcx);
-		} else {
-			pcx.fatalError(tk.toExplainString() + "'('がありません.");
-		}
-
-		if (ArgList.isFirst(tk)) {
-			argList = new ArgList(pcx, argTypeList);
-			argList.parse(pcx);
-		}
-
-		tk = ct.getCurrentToken(pcx);
-
-		if (tk.getType() == CToken.TK_RPAR) {
-			tk = ct.getNextToken(pcx);
-		} else {
-			pcx.fatalError(tk.toExplainString() + "')'がありません.");
-		}
-
-		cSymbolTableEntry = cst.searchFunc(ident.getText());
-
-		if(cSymbolTableEntry == null) {
-			pcx.fatalError(tk.toExplainString() + "この関数は定義されていません.");
-		}
-
-		if (Declblock.isFirst(tk)) {
-			declblock = new Declblock(pcx,ident);
-			declblock.parse(pcx);
-//			cst.showTable();
-		} else {
-			pcx.fatalError(tk.toExplainString() + "関数の内部がありません");
 		}
 	}
 
 	public void semanticCheck(CParseContext pcx) throws FatalErrorException {
 		if (funcType != cSymbolTableEntry.getType()) {
-			pcx.fatalError("プロトタイプ宣言の型と関数定義の型が異なります.");
+			pcx.warning("プロトタイプ宣言の型と関数定義の型が異なります.");
 		}
 
 		if  ((argTypeList.size() != cSymbolTableEntry.getList().size())) {
-			pcx.fatalError("プロトタイプ宣言の引数の個数と関数定義の引数の個数が異なります.");
+			pcx.warning("プロトタイプ宣言の引数の個数と関数定義の引数の個数が異なります.");
 		}
 
 		int i = 0;
 		for (CType argType : argTypeList) {
 			if (argType != cSymbolTableEntry.getList().get(i)) {
-				pcx.fatalError("プロトタイプ宣言の型と関数定義の型が異なります.");
+				pcx.warning("プロトタイプ宣言の型と関数定義の型が異なります.");
 			}
 			i++;
 		}
@@ -114,7 +120,7 @@ public class Function extends CParseRule{
 		if (declblock != null) {
 			declblock.semanticCheck(pcx);
 			if (funcType != declblock.getCType()) {
-				pcx.fatalError("関数定義の型と返り値の型が異なります.");
+				pcx.warning("関数定義の型と返り値の型が異なります.");
 			}
 		}
 	}

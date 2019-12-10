@@ -39,7 +39,7 @@ public class StatementReturn extends CParseRule {
 		if (tk.getType() == CToken.TK_SEMI) {
 			ct.getNextToken(pcx);
 		} else {
-			pcx.fatalError(tk.toExplainString() + "';'がありません.");
+			pcx.warning(tk.toExplainString() + "';'がなかったので補いました.");
 		}
 	}
 

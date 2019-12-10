@@ -3,6 +3,7 @@ package lang.c.parse;
 import java.util.ArrayList;
 
 import lang.FatalErrorException;
+import lang.RecoverableErrorException;
 import lang.c.CParseContext;
 import lang.c.CParseRule;
 import lang.c.CToken;
@@ -40,12 +41,17 @@ public class TypeList extends CParseRule {
 
 		while (tk.getType() == CToken.TK_COMMA) {
 			tk = ct.getNextToken(pcx);
-			if (TypeItem.isFirst(tk)) {
-				typeitem = new TypeItem(pcx, cTypeList);
-				typeitem.parse(pcx);
-				typeItemList.add(typeitem);
-			} else {
-				pcx.fatalError(tk.toExplainString() + "引数の型が指定されていません.");
+			try {
+				if (TypeItem.isFirst(tk)) {
+					typeitem = new TypeItem(pcx, cTypeList);
+					typeitem.parse(pcx);
+					typeItemList.add(typeitem);
+				} else {
+					pcx.recoverableError(tk.toExplainString() + "引数の型が指定されていません.");
+				}
+			} catch (RecoverableErrorException e) {
+				ct.skipTo(pcx, CToken.TK_SEMI, CToken.TK_RCUR);
+				tk = ct.getNextToken(pcx);
 			}
 			tk = ct.getCurrentToken(pcx);
 		}

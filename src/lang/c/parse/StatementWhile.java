@@ -3,6 +3,7 @@ package lang.c.parse;
 import java.io.PrintStream;
 
 import lang.FatalErrorException;
+import lang.RecoverableErrorException;
 import lang.c.CParseContext;
 import lang.c.CParseRule;
 import lang.c.CToken;
@@ -26,21 +27,25 @@ public class StatementWhile extends CParseRule {
 	public void parse(CParseContext pcx) throws FatalErrorException {
 		CTokenizer ct = pcx.getTokenizer();
 		CToken tk = ct.getNextToken(pcx);
+		try {
+			if (ConditionBlock.isFirst(tk)) {
+				conditionBlock = new ConditionBlock(pcx);
+				conditionBlock.parse(pcx);
+			} else {
+				pcx.recoverableError(tk.toExplainString() + "条件式がありません.");
+			}
 
-		if (ConditionBlock.isFirst(tk)) {
-			conditionBlock = new ConditionBlock(pcx);
-			conditionBlock.parse(pcx);
-		} else {
-			pcx.fatalError(tk.toExplainString() + "条件式がありません.");
-		}
+			tk = ct.getCurrentToken(pcx);
 
-		tk = ct.getCurrentToken(pcx);
-
-		if (StatementBlock.isFirst(tk)) {
-			statementBlock = new StatementBlock(pcx, idtk);
-			statementBlock.parse(pcx);
-		} else {
-			pcx.fatalError(tk.toExplainString() + "条件文内部に文がありません.");
+			if (StatementBlock.isFirst(tk)) {
+				statementBlock = new StatementBlock(pcx, idtk);
+				statementBlock.parse(pcx);
+			} else {
+				pcx.recoverableError(tk.toExplainString() + "条件文内部に文がありません.");
+			}
+		} catch (RecoverableErrorException e) {
+			ct.skipTo(pcx, CToken.TK_SEMI, CToken.TK_RCUR);
+			tk = ct.getNextToken(pcx);
 		}
 	}
 
@@ -55,18 +60,18 @@ public class StatementWhile extends CParseRule {
 
 	public void codeGen(CParseContext pcx) throws FatalErrorException {
 		PrintStream o = pcx.getIOContext().getOutStream();
-        o.println(";;; statementWhile starts");
+		o.println(";;; statementWhile starts");
 		if (conditionBlock != null && statementBlock != null) {
 			int seq = pcx.getSeqId();
 			o.println("WHILE" + seq + ":\t\t\t\t; statementWhile:");
 			conditionBlock.codeGen(pcx);
-	        o.println("TRUE" + seq + ":\t\t\t\t; statementWhile:");
+			o.println("TRUE" + seq + ":\t\t\t\t; statementWhile:");
 			o.println("\tMOV\t-(R6), R0\t; statementWhile:");
 			o.println("\tBRZ\tFALSE" + seq + "\t\t\t; statementWhile:");
 			statementBlock.codeGen(pcx);
 			o.println("\tJMP\tWHILE" + seq + "\t\t\t; statementWhile:");
 			o.println("FALSE" + seq + ":\t\t\t\t\t; statementWhile:");
 		}
-        o.println(";;; statementWhile completes");
+		o.println(";;; statementWhile completes");
 	}
 }

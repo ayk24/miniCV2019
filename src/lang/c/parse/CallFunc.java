@@ -3,6 +3,7 @@ package lang.c.parse;
 import java.io.PrintStream;
 
 import lang.FatalErrorException;
+import lang.RecoverableErrorException;
 import lang.c.CParseContext;
 import lang.c.CParseRule;
 import lang.c.CToken;
@@ -26,21 +27,26 @@ public class CallFunc extends CParseRule {
 		CTokenizer ct = pcx.getTokenizer();
 		CToken tk = ct.getNextToken(pcx);
 
-		if (Ident.isFirst(tk)) {
-			identToken = tk;
-			ident = new Ident(pcx);
-			ident.parse(pcx);
-		} else {
-			pcx.fatalError(tk.toExplainString() + "識別子がありません.");
-		}
+		try {
+			if (Ident.isFirst(tk)) {
+				identToken = tk;
+				ident = new Ident(pcx);
+				ident.parse(pcx);
+			} else {
+				pcx.recoverableError(tk.toExplainString() + "識別子がありません.");
+			}
 
-		tk = ct.getCurrentToken(pcx);
+			tk = ct.getCurrentToken(pcx);
 
-		if (Call.isFirst(tk)) {
-			call = new Call(pcx, identToken);
-			call.parse(pcx);
-		} else {
-			pcx.fatalError(tk.toExplainString() + "'()'がありません.");
+			if (Call.isFirst(tk)) {
+				call = new Call(pcx, identToken);
+				call.parse(pcx);
+			} else {
+				pcx.warning(tk.toExplainString() + "'()'がないので補いました.");
+			}
+		} catch (RecoverableErrorException e) {
+			ct.skipTo(pcx, CToken.TK_SEMI, CToken.TK_RCUR);
+			tk = ct.getNextToken(pcx);
 		}
 	}
 

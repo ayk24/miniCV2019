@@ -45,6 +45,7 @@ public class StatementAssign extends CParseRule{
 					ct.getNextToken(pcx);
 				} else {
 					expression = null;
+					pcx.warning(tk.toExplainString() + "';'がないので補いました.");
 				}
 			}
 		}
@@ -55,14 +56,14 @@ public class StatementAssign extends CParseRule{
 			primary.semanticCheck(pcx);
 			expression.semanticCheck(pcx);
 			if (primary.getCType() != expression.getCType()) {
-				pcx.fatalError("左辺と右辺の型が一致していません.");
+				pcx.warning("左辺と右辺の型が一致していません.");
 			}
 			if (primary.getCType() == CType.getCType(CType.T_iarray)
 					|| primary.getCType() == CType.getCType(CType.T_parray)) {
-					pcx.fatalError("配列に代入することはできません.");
+					pcx.warning("配列に代入することはできません.");
 				}
 			if (primary.isConstant()) {
-				pcx.fatalError("定数には代入できません.");
+				pcx.warning("定数には代入できません.");
 			}
 		}
 	}

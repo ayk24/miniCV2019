@@ -3,6 +3,7 @@ package lang.c.parse;
 import java.io.PrintStream;
 
 import lang.FatalErrorException;
+import lang.RecoverableErrorException;
 import lang.c.CParseContext;
 import lang.c.CParseRule;
 import lang.c.CSymbolTable;
@@ -42,60 +43,66 @@ public class DeclItem extends CParseRule {
 			type = CType.getCType(CType.T_int);
 		}
 
-		if (tk.getType() == CToken.TK_IDENT) {
-			name = tk.getText();
-			tk = ct.getNextToken(pcx);
-		} else {
-			pcx.fatalError(tk.toExplainString() + "識別子がありません.");
-		}
+		try {
+			if (tk.getType() == CToken.TK_IDENT) {
+				name = tk.getText();
+				tk = ct.getNextToken(pcx);
+			} else {
+				pcx.recoverableError(tk.toExplainString() + "識別子がありません.");
+			}
 
-		if (tk.getType() == CToken.TK_LBRA) {
-			tk = ct.getNextToken(pcx);
-
-			if (tk.getType() == CToken.TK_NUM) {
-				size = tk.getIntValue();
+			if (tk.getType() == CToken.TK_LBRA) {
 				tk = ct.getNextToken(pcx);
 
-				if (tk.getType() == CToken.TK_RBRA) {
+				if (tk.getType() == CToken.TK_NUM) {
+					size = tk.getIntValue();
+					tk = ct.getNextToken(pcx);
+
+					if (tk.getType() == CToken.TK_RBRA) {
+						tk = ct.getNextToken(pcx);
+					} else {
+						pcx.warning(tk.toExplainString() + "要素数の後に']'がないので補いました.");
+					}
+				} else {
+					pcx.recoverableError(tk.toExplainString() + "'['の後に要素数が指定されていません");
+				}
+
+
+				if (type == CType.getCType(CType.T_pint)) {
+					type = CType.getCType(CType.T_parray);
+				} else {
+					type = CType.getCType(CType.T_iarray);
+				}
+			} else if (tk.getType() == CToken.TK_LPAR) {
+				tk = ct.getNextToken(pcx);
+
+				if (TypeList.isFirst(tk)) {
+					typelist = new TypeList(pcx);
+					typelist.parse(pcx);
+				}
+
+				tk = ct.getCurrentToken(pcx);
+
+				if (tk.getType() == CToken.TK_RPAR) {
+					size = 0;
+					constp = true;
 					tk = ct.getNextToken(pcx);
 				} else {
-					pcx.fatalError(tk.toExplainString() + "要素数の後に']'がありません.");
+					pcx.warning(tk.toExplainString() + "')'が無いので補いました.");
 				}
-			} else {
-				pcx.fatalError(tk.toExplainString() + "'['の後に要素数が指定されていません");
+			}
+			cSymbolTableEntry = cst.registerTable(name, type, size, constp);
+
+			if (cSymbolTableEntry == null) {
+				pcx.warning(name + "は既に定義されています.");
 			}
 
-			if (type == CType.getCType(CType.T_pint)) {
-				type = CType.getCType(CType.T_parray);
-			} else {
-				type = CType.getCType(CType.T_iarray);
+			if (typelist != null) {
+				cSymbolTableEntry.setList(((TypeList)typelist).getList());
 			}
-		} else if (tk.getType() == CToken.TK_LPAR) {
+		} catch (RecoverableErrorException e) {
+			ct.skipTo(pcx, CToken.TK_SEMI, CToken.TK_RCUR);
 			tk = ct.getNextToken(pcx);
-
-			if (TypeList.isFirst(tk)) {
-				typelist = new TypeList(pcx);
-				typelist.parse(pcx);
-			}
-
-			tk = ct.getCurrentToken(pcx);
-
-			if (tk.getType() == CToken.TK_RPAR) {
-				size = 0;
-				constp = true;
-				tk = ct.getNextToken(pcx);
-			} else {
-				pcx.fatalError(tk.toExplainString() + "')'がありません.");
-			}
-		}
-		cSymbolTableEntry = cst.registerTable(name, type, size, constp);
-
-		if (cSymbolTableEntry == null) {
-			pcx.fatalError(name + "は既に定義されています.");
-		}
-
-		if (typelist != null) {
-			cSymbolTableEntry.setList(((TypeList)typelist).getList());
 		}
 	}
 

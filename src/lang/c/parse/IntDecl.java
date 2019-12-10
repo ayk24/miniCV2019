@@ -3,6 +3,7 @@ package lang.c.parse;
 import java.util.ArrayList;
 
 import lang.FatalErrorException;
+import lang.RecoverableErrorException;
 import lang.c.CParseContext;
 import lang.c.CParseRule;
 import lang.c.CToken;
@@ -27,37 +28,41 @@ public class IntDecl extends CParseRule {
 	public void parse(CParseContext pcx) throws FatalErrorException {
 		CTokenizer ct = pcx.getTokenizer();
 		CToken tk = ct.getCurrentToken(pcx);
-
-		if (tk.getType() == CToken.TK_INT) {
-			tk = ct.getNextToken(pcx);
-
-			if(DeclItem.isFirst(tk)) {
-				declItem = new DeclItem(pcx);
-				declItem.parse(pcx);
-				declItemList.add(declItem);
-				tk = ct.getCurrentToken(pcx);
-			} else {
-				pcx.fatalError(tk.toExplainString() + "識別子がありません.");
-			}
-
-			while(tk.getType() == CToken.TK_COMMA) {
+		try {
+			if (tk.getType() == CToken.TK_INT) {
 				tk = ct.getNextToken(pcx);
-				if (DeclItem.isFirst(tk)) {
+
+				if(DeclItem.isFirst(tk)) {
 					declItem = new DeclItem(pcx);
 					declItem.parse(pcx);
 					declItemList.add(declItem);
-					tk = ct.getCurrentToken(pcx);
 				} else {
-					pcx.fatalError(tk.toExplainString() + "連続して宣言する識別子がありません.");
+					pcx.recoverableError(tk.toExplainString() + "識別子がありません.");
 				}
 
-			}
+				tk = ct.getCurrentToken(pcx);
 
-			if (tk.getType() == CToken.TK_SEMI) {
-				tk = ct.getNextToken(pcx);
-			} else {
-				pcx.fatalError(tk.toExplainString() + "';'がありません.");
+				while(tk.getType() == CToken.TK_COMMA) {
+					tk = ct.getNextToken(pcx);
+					if (DeclItem.isFirst(tk)) {
+						declItem = new DeclItem(pcx);
+						declItem.parse(pcx);
+						declItemList.add(declItem);
+					} else {
+						pcx.recoverableError(tk.toExplainString() + "連続して宣言する識別子がありません.");
+					}
+					tk = ct.getCurrentToken(pcx);
+				}
+
+				if (tk.getType() == CToken.TK_SEMI) {
+					tk = ct.getNextToken(pcx);
+				} else {
+					pcx.warning(tk.toExplainString() + "';'がなかったので補いました.");
+				}
 			}
+		} catch (RecoverableErrorException e) {
+			ct.skipTo(pcx, CToken.TK_SEMI, CToken.TK_RCUR);
+			tk = ct.getNextToken(pcx);
 		}
 	}
 

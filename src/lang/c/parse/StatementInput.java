@@ -3,6 +3,7 @@ package lang.c.parse;
 import java.io.PrintStream;
 
 import lang.FatalErrorException;
+import lang.RecoverableErrorException;
 import lang.c.CParseContext;
 import lang.c.CParseRule;
 import lang.c.CToken;
@@ -24,18 +25,22 @@ public class StatementInput extends CParseRule {
 	public void parse(CParseContext pcx) throws FatalErrorException {
 		CTokenizer ct = pcx.getTokenizer();
 		CToken tk = ct.getNextToken(pcx);
-
-		if (Primary.isFirst(tk)) {
-			primary = new Primary(pcx);
-			primary.parse(pcx);
-			tk = ct.getCurrentToken(pcx);
-			if (tk.getType() == CToken.TK_SEMI) {
-				ct.getNextToken(pcx);
+		try {
+			if (Primary.isFirst(tk)) {
+				primary = new Primary(pcx);
+				primary.parse(pcx);
+				tk = ct.getCurrentToken(pcx);
+				if (tk.getType() == CToken.TK_SEMI) {
+					ct.getNextToken(pcx);
+				}else {
+					pcx.warning(tk.toExplainString() + "'primary'のあとの';'を補いました");
+				}
 			}else {
-				pcx.fatalError("'primary'のあとは';'が来ます.");
+				pcx.recoverableError(tk.toExplainString() + "'primary'がありません.");
 			}
-		}else {
-			pcx.fatalError("'primary'がありません.");
+		} catch (RecoverableErrorException e) {
+			ct.skipTo(pcx, CToken.TK_SEMI, CToken.TK_RCUR);
+			tk = ct.getNextToken(pcx);
 		}
 	}
 
@@ -43,7 +48,7 @@ public class StatementInput extends CParseRule {
 		if (primary != null) {
 			primary.semanticCheck(pcx);
 			if (primary.isConstant() == true) {
-				pcx.fatalError("定数にinputは出来ません.");
+				pcx.warning("定数にinputは出来ません.");
 			}
 		}
 	}

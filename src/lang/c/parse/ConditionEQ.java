@@ -3,6 +3,7 @@ package lang.c.parse;
 import java.io.PrintStream;
 
 import lang.FatalErrorException;
+import lang.RecoverableErrorException;
 import lang.c.CParseContext;
 import lang.c.CParseRule;
 import lang.c.CToken;
@@ -30,11 +31,16 @@ public class ConditionEQ extends CParseRule {
 		CToken tk = ct.getCurrentToken(pcx);
 		tk = ct.getNextToken(pcx);
 
-		if (Expression.isFirst(tk)){
-			right = new Expression(pcx);
-			right.parse(pcx);
-		} else {
-			pcx.fatalError("'=='のあとは'expression'が来ます.");
+		try {
+			if (Expression.isFirst(tk)){
+				right = new Expression(pcx);
+				right.parse(pcx);
+			} else {
+				pcx.recoverableError(tk.toExplainString() + "'=='のあとは'expression'が来ます.");
+			}
+		} catch (RecoverableErrorException e) {
+			ct.skipTo(pcx, CToken.TK_SEMI, CToken.TK_RCUR);
+			tk = ct.getNextToken(pcx);
 		}
 	}
 
@@ -44,7 +50,7 @@ public class ConditionEQ extends CParseRule {
 			left.semanticCheck(pcx);
 			right.semanticCheck(pcx);
 			if (!left.getCType().equals(right.getCType())) {
-				pcx.fatalError("左辺の型[" + left.getCType().toString() + "] と右辺の型["
+				pcx.warning("左辺の型[" + left.getCType().toString() + "] と右辺の型["
 						+ right.getCType().toString() + "] が一致しないので比較できません.");
 			} else {
 				// スタックトップにはブール値が残るようにする.

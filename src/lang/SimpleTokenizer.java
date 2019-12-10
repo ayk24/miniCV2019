@@ -109,7 +109,7 @@ public class SimpleTokenizer extends Tokenizer<SimpleToken, SimpleParseContext> 
 		in = pcx.getIOContext().getInStream();
 		err = pcx.getIOContext().getErrStream();
 		currentTk = readToken();
-//System.out.println("#readToken()='" + currentTk.toExplainString() + currentTk.getType());
+//System.out.println("#readToken()='" + current currentTk.getType());
 		return currentTk;
 	}
 	private SimpleToken readToken() {

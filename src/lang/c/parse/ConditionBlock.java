@@ -1,6 +1,7 @@
 package lang.c.parse;
 
 import lang.FatalErrorException;
+import lang.RecoverableErrorException;
 import lang.c.CParseContext;
 import lang.c.CParseRule;
 import lang.c.CToken;
@@ -19,20 +20,24 @@ public class ConditionBlock extends CParseRule {
 	public void parse(CParseContext pcx) throws FatalErrorException {
 		CTokenizer ct = pcx.getTokenizer();
 		CToken tk = ct.getNextToken(pcx);
+		try {
+			if (Condition.isFirst(tk)) {
+				condition = new Condition(pcx);
+				condition.parse(pcx);
+			} else {
+				pcx.recoverableError(tk.toExplainString() + "条件式がありません.");
+			}
 
-		if (Condition.isFirst(tk)) {
-			condition = new Condition(pcx);
-			condition.parse(pcx);
-		} else {
-			pcx.fatalError(tk.toExplainString() + "条件式がありません.");
-		}
+			tk = ct.getCurrentToken(pcx);
 
-		tk = ct.getCurrentToken(pcx);
-
-		if (tk.getType() == CToken.TK_RPAR) {
-			ct.getNextToken(pcx);
-		} else {
-			pcx.fatalError(tk.toExplainString() + "')'がありません.");
+			if (tk.getType() == CToken.TK_RPAR) {
+				ct.getNextToken(pcx);
+			} else {
+				pcx.warning(tk.toExplainString() + "')'がないので補いました.");
+			}
+		} catch (RecoverableErrorException e) {
+			ct.skipTo(pcx, CToken.TK_SEMI, CToken.TK_RCUR);
+			tk = ct.getNextToken(pcx);
 		}
 	}
 

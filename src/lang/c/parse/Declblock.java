@@ -54,7 +54,7 @@ public class Declblock extends CParseRule {
 		if (tk.getType() == CToken.TK_RCUR) {
 			ct.getNextToken(pcx);
 		} else {
-			pcx.fatalError(tk.toExplainString() + "'}'がありません.");
+			pcx.warning(tk.toExplainString() + "'}'がないので補いました.");
 		}
 
 		addrSize = cst.getAddrsize();
@@ -70,7 +70,7 @@ public class Declblock extends CParseRule {
 			if (((Statement)statement).checkStatementReturn()) {
 				if (returnType != null) {
 					if (statement.getCType() != returnType) {
-						pcx.fatalError("返り値の型が異なっているものがあります.");
+						pcx.warning("返り値の型が異なっているものがあります.");
 					}
 				} else {
 					returnType = statement.getCType();
@@ -79,7 +79,7 @@ public class Declblock extends CParseRule {
 			} else if (((Statement)statement).checkStatementBranch()) {
 				if (returnType != null) {
 					if ((statement.getCType() != null) && statement.getCType() != returnType) {
-						pcx.fatalError("返り値の型が異なっているものがあります.");
+						pcx.warning("返り値の型が異なっているものがあります.");
 					}
 				} else {
 					returnType = statement.getCType();

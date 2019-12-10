@@ -3,6 +3,7 @@ package lang.c.parse;
 import java.io.PrintStream;
 
 import lang.FatalErrorException;
+import lang.RecoverableErrorException;
 import lang.c.CParseContext;
 import lang.c.CParseRule;
 import lang.c.CToken;
@@ -27,27 +28,32 @@ public class StatementIf extends CParseRule {
 		CTokenizer ct = pcx.getTokenizer();
 		CToken tk = ct.getNextToken(pcx);
 
-		if (ConditionBlock.isFirst(tk)) {
-			conditionBlock = new ConditionBlock(pcx);
-			conditionBlock.parse(pcx);
-		} else {
-			pcx.fatalError(tk.toExplainString() + "条件式がありません.");
-		}
+		try {
+			if (ConditionBlock.isFirst(tk)) {
+				conditionBlock = new ConditionBlock(pcx);
+				conditionBlock.parse(pcx);
+			} else {
+				pcx.recoverableError(tk.toExplainString() + "条件式がありません.");
+			}
 
-		tk = ct.getCurrentToken(pcx);
+			tk = ct.getCurrentToken(pcx);
 
-		if (StatementBlock.isFirst(tk)) {
-			statementBlock = new StatementBlock(pcx, ident);
-			statementBlock.parse(pcx);
-		} else {
-			pcx.fatalError(tk.toExplainString() + "条件文の中に文がありません");
-		}
+			if (StatementBlock.isFirst(tk)) {
+				statementBlock = new StatementBlock(pcx, ident);
+				statementBlock.parse(pcx);
+			} else {
+				pcx.recoverableError(tk.toExplainString() + "条件文の中に文がありません.");
+			}
 
-		tk = ct.getCurrentToken(pcx);
+			tk = ct.getCurrentToken(pcx);
 
-		if (StatementElse.isFirst(tk)) {
-			statementElse = new StatementElse(pcx, ident);
-			statementElse.parse(pcx);
+			if (StatementElse.isFirst(tk)) {
+				statementElse = new StatementElse(pcx, ident);
+				statementElse.parse(pcx);
+			}
+		} catch (RecoverableErrorException e) {
+			ct.skipTo(pcx, CToken.TK_SEMI, CToken.TK_RCUR);
+			tk = ct.getNextToken(pcx);
 		}
 	}
 
@@ -66,7 +72,7 @@ public class StatementIf extends CParseRule {
 			} else if (statementBlock.getCType() == statementElse.getCType()) {
 				setCType(statementBlock.getCType());
 			} else {
-				pcx.fatalError("IF文とELSE文で返り値の型が異なっています.");
+				pcx.warning("IF文とELSE文で返り値の型が異なっています.");
 			}
 		} else {
 			setCType(statementBlock.getCType());

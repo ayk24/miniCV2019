@@ -3,6 +3,7 @@ package lang.c.parse;
 import java.io.PrintStream;
 
 import lang.FatalErrorException;
+import lang.RecoverableErrorException;
 import lang.c.CParseContext;
 import lang.c.CParseRule;
 import lang.c.CToken;
@@ -29,11 +30,16 @@ public class ConditionNE extends CParseRule {
 		CToken tk = ct.getCurrentToken(pcx);
 		if(tk.getType() == CToken.TK_NE){
 			tk = ct.getNextToken(pcx);
-			if(Expression.isFirst(tk)){
-				right = new Expression(pcx);
-				right.parse(pcx);
-			} else {
-				pcx.fatalError("'!='のあとは'expression'が来ます.");
+			try {
+				if(Expression.isFirst(tk)){
+					right = new Expression(pcx);
+					right.parse(pcx);
+				} else {
+					pcx.recoverableError(tk.toExplainString() + "'!='のあとは'expression'が来ます.");
+				}
+			} catch (RecoverableErrorException e) {
+				ct.skipTo(pcx, CToken.TK_SEMI, CToken.TK_RCUR);
+				tk = ct.getNextToken(pcx);
 			}
 		}
 	}

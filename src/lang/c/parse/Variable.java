@@ -56,16 +56,16 @@ public class Variable extends CParseRule{
 				} else if (ident.getCType() == CType.getCType(CType.T_parray)) {
 					setCType(CType.getCType(CType.T_pint));
 				} else if (ident.getCType().getType() == CType.T_err) {
-					pcx.fatalError("identの識別子はintでなければなりません.");
+					pcx.warning("identの識別子はintでなければなりません.");
 				} else if (ident.getCType().getType() == CType.T_int) {
-					pcx.fatalError("int型の変数を配列型として扱っています.");
+					pcx.warning("int型の変数を配列型として扱っています.");
 				} else if (ident.getCType().getType() == CType.T_pint) {
-					pcx.fatalError("pint型の変数を配列型として扱っています.");
+					pcx.warning("pint型の変数を配列型として扱っています.");
 				}
 			}
 			if (call != null) {
 				if (call.isConstant()) {
-					pcx.fatalError("定数には代入できません.");
+					pcx.warning("定数には代入できません.");
 				}
 			}
 			setConstant(ident.isConstant());

@@ -1,6 +1,7 @@
 package lang.c.parse;
 
 import lang.FatalErrorException;
+import lang.RecoverableErrorException;
 import lang.c.CParseContext;
 import lang.c.CParseRule;
 import lang.c.CToken;
@@ -25,14 +26,19 @@ public class StatementElse extends CParseRule {
 		CTokenizer ct = pcx.getTokenizer();
 		CToken tk = ct.getNextToken(pcx);
 
-		if (StatementIf.isFirst(tk)) {
-			cParseRule = new StatementIf(pcx, idtk);
-			cParseRule.parse(pcx);
-		} else if (StatementBlock.isFirst(tk)) {
-			cParseRule = new StatementBlock(pcx, idtk);
-			cParseRule.parse(pcx);
-		} else {
-			pcx.fatalError(tk.toExplainString() + "条件文の内部に文がありません.");
+		try {
+			if (StatementIf.isFirst(tk)) {
+				cParseRule = new StatementIf(pcx, idtk);
+				cParseRule.parse(pcx);
+			} else if (StatementBlock.isFirst(tk)) {
+				cParseRule = new StatementBlock(pcx, idtk);
+				cParseRule.parse(pcx);
+			} else {
+				pcx.recoverableError(tk.toExplainString() + "条件文の内部に文がありません.");
+			}
+		} catch (RecoverableErrorException e) {
+			ct.skipTo(pcx, CToken.TK_SEMI, CToken.TK_RCUR);
+			tk = ct.getNextToken(pcx);
 		}
 	}
 

@@ -503,4 +503,45 @@ public class CTokenizer extends Tokenizer<CToken, CParseContext> {
 		}
 		return tk;
 	}
+
+	public void skipTo(CParseContext pctx, int t) {
+		int i = getCurrentToken(pctx).getType();
+		while (i != t && i != CToken.TK_EOF) {
+			i = getNextToken(pctx).getType();
+		}
+		pctx.warning(getCurrentToken(pctx).toExplainString() + "まで読み飛ばしました.");
+	}
+
+	public void skipTo(CParseContext pctx, int t1, int t2) {
+		int i = getCurrentToken(pctx).getType();
+		while (i != t1 && i != t2 && i != CToken.TK_EOF) {
+			i = getNextToken(pctx).getType();
+		}
+		pctx.warning(getCurrentToken(pctx).toExplainString() + "まで読み飛ばしました.");
+	}
+
+	public void skipTo(CParseContext pctx, int t1, int t2, int t3, int t4) {
+		int i = getCurrentToken(pctx).getType();
+		while (i != t1 && i != t2 && i != t3 && i != t4 && i != CToken.TK_EOF) {
+			i = getNextToken(pctx).getType();
+		}
+		pctx.warning(getCurrentToken(pctx).toExplainString() + "まで読み飛ばしました.");
+	}
+
+	public void skipTo(CParseContext pctx, int t1, int t2, int t3, int t4, int t5, int t6) {
+		int i = getCurrentToken(pctx).getType();
+		while (i != t1 && i != t2 && i != t3 && i != t4 && i != t5 && i != t6 && i != CToken.TK_EOF) {
+			i = getNextToken(pctx).getType();
+		}
+		pctx.warning(getCurrentToken(pctx).toExplainString() + "まで読み飛ばしました.");
+	}
+
+	public void skipTo(CParseContext pctx, int t1, int t2, int t3, int t4, int t5, int t6, int t7, int t8) {
+		int i = getCurrentToken(pctx).getType();
+		while (i != t1 && i != t2 && i != t3 && i != t4 && i != t5 && i != t6 && i != t7 && i != t8 && i != CToken.TK_EOF) {
+			i = getNextToken(pctx).getType();
+		}
+		pctx.warning(getCurrentToken(pctx).toExplainString() + "まで読み飛ばしました.");
+	}
+
 }

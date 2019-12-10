@@ -3,6 +3,7 @@ package lang.c.parse;
 import java.io.PrintStream;
 
 import lang.FatalErrorException;
+import lang.RecoverableErrorException;
 import lang.c.CParseContext;
 import lang.c.CParseRule;
 import lang.c.CToken;
@@ -27,14 +28,20 @@ public class ConditionOR extends CParseRule {
 		CTokenizer ct = pcx.getTokenizer();
 		CToken tk = ct.getCurrentToken(pcx);
 
-		if(tk.getType() == CToken.TK_OR){
-			tk = ct.getNextToken(pcx);
-			if(ConditionTerm.isFirst(tk)){
-				right = new ConditionTerm(pcx);
-				right.parse(pcx);
-			} else {
-				pcx.fatalError("'||'のあとは'ConditionTerm'が来ます.");
+		try {
+			if(tk.getType() == CToken.TK_OR){
+				tk = ct.getNextToken(pcx);
+
+				if(ConditionTerm.isFirst(tk)){
+					right = new ConditionTerm(pcx);
+					right.parse(pcx);
+				} else {
+					pcx.recoverableError(tk.toExplainString() + "'||'のあとは'ConditionTerm'が来ます.");
+				}
 			}
+		} catch (RecoverableErrorException e) {
+			ct.skipTo(pcx, CToken.TK_SEMI, CToken.TK_RCUR);
+			tk = ct.getNextToken(pcx);
 		}
 	}
 
@@ -45,7 +52,6 @@ public class ConditionOR extends CParseRule {
 			this.setCType(CType.getCType(CType.T_bool));
 			this.setConstant(true);
 		}
-
 	}
 
 	public void codeGen(CParseContext pcx) throws FatalErrorException {

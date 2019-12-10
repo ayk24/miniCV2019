@@ -3,6 +3,7 @@ package lang.c.parse;
 import java.io.PrintStream;
 
 import lang.FatalErrorException;
+import lang.RecoverableErrorException;
 import lang.c.CParseContext;
 import lang.c.CParseRule;
 import lang.c.CToken;
@@ -26,15 +27,20 @@ public class ConditionAND extends CParseRule {
 	public void parse(CParseContext pcx) throws FatalErrorException {
 		CTokenizer ct = pcx.getTokenizer();
 		CToken tk = ct.getCurrentToken(pcx);
+		try {
+			if(tk.getType() == CToken.TK_AND){
+				tk = ct.getNextToken(pcx);
 
-		if(tk.getType() == CToken.TK_AND){
-			tk = ct.getNextToken(pcx);
-			if(ConditionFactor.isFirst(tk)){
-				right = new ConditionFactor(pcx);
-				right.parse(pcx);
-			} else {
-				pcx.fatalError(tk.toExplainString() +"'&&'のあとは'ConditionFactor'が来ます.");
+				if(ConditionFactor.isFirst(tk)){
+					right = new ConditionFactor(pcx);
+					right.parse(pcx);
+				} else {
+					pcx.recoverableError(tk.toExplainString() + "'&&'のあとは'ConditionFactor'が来ます.");
+				}
 			}
+		} catch (RecoverableErrorException e) {
+			ct.skipTo(pcx, CToken.TK_SEMI, CToken.TK_RCUR);
+			tk = ct.getNextToken(pcx);
 		}
 	}
 

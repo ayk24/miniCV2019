@@ -48,7 +48,7 @@ public class TypeItem extends CParseRule{
 
 				tk = ct.getNextToken(pcx);
 			} else {
-				pcx.fatalError(tk.toExplainString() + "']'がありません.");
+				pcx.warning(tk.toExplainString() + "']'がないので補いました.");
 			}
 		}
 		cTypeList.add(type);

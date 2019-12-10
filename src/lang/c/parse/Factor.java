@@ -3,6 +3,7 @@ package lang.c.parse;
 import java.io.PrintStream;
 
 import lang.FatalErrorException;
+import lang.RecoverableErrorException;
 import lang.c.CParseContext;
 import lang.c.CParseRule;
 import lang.c.CToken;
@@ -71,12 +72,16 @@ class PlusFactor extends CParseRule {
 		// ここにやってくるときは、必ずisFirst()が満たされている
 		CTokenizer ct = pcx.getTokenizer();
 		CToken tk = ct.getNextToken(pcx);
-
-		if(UnsignedFactor.isFirst(tk)){
-			unsignedfactor = new UnsignedFactor(pcx);
-			unsignedfactor.parse(pcx);
-		} else {
-			pcx.fatalError(tk.toExplainString() + "'+'の後に'unsignedfactor'がありません.");
+		try {
+			if(UnsignedFactor.isFirst(tk)){
+				unsignedfactor = new UnsignedFactor(pcx);
+				unsignedfactor.parse(pcx);
+			} else {
+				pcx.recoverableError(tk.toExplainString() + "'+'の後に'unsignedfactor'がありません.");
+			}
+		} catch (RecoverableErrorException e) {
+			ct.skipTo(pcx, CToken.TK_SEMI, CToken.TK_RCUR);
+			tk = ct.getNextToken(pcx);
 		}
 	}
 
@@ -113,11 +118,16 @@ class MinusFactor extends CParseRule {
 		CTokenizer ct = pcx.getTokenizer();
 		CToken tk = ct.getNextToken(pcx);
 
-		if(UnsignedFactor.isFirst(tk)){
-			unsignedfactor = new UnsignedFactor(pcx);
-			unsignedfactor.parse(pcx);
-		} else {
-			  pcx.fatalError(tk.toExplainString() + "'-'の後に'unsignedfactor'がありません.");
+		try {
+			if(UnsignedFactor.isFirst(tk)){
+				unsignedfactor = new UnsignedFactor(pcx);
+				unsignedfactor.parse(pcx);
+			} else {
+				pcx.recoverableError(tk.toExplainString() + "'-'の後に'unsignedfactor'がありません.");
+			}
+		} catch (RecoverableErrorException e) {
+			ct.skipTo(pcx, CToken.TK_SEMI, CToken.TK_RCUR);
+			tk = ct.getNextToken(pcx);
 		}
 	}
 
@@ -128,7 +138,7 @@ class MinusFactor extends CParseRule {
 			setConstant(unsignedfactor.isConstant());
 
 			if(unsignedfactor.getCType().getType() == CType.T_pint){
-				pcx.fatalError("右辺の型[int*]に'-'は付けられません.");
+				pcx.warning("右辺の型[int*]に'-'は付けられません.");
 			}
 		}
 	}

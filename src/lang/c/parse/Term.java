@@ -86,7 +86,7 @@ class TermMult extends CParseRule {
 			right = new Factor(pcx);
 			right.parse(pcx);
 		} else {
-			pcx.fatalError(tk.toExplainString() + "*の後ろはfactorです");
+			pcx.warning(tk.toExplainString() + "*の後ろはfactorです");
 		}
 	}
 
@@ -107,7 +107,7 @@ class TermMult extends CParseRule {
 			int rt = right.getCType().getType();	// *の右辺の型
 			int nt = s[lt][rt];						// 規則による型計算
 			if (nt == CType.T_err) {
-				pcx.fatalError(op.toExplainString() + "左辺の型[" + left.getCType().toString() + "]と右辺の型[" + right.getCType().toString() + "]は掛けられません");
+				pcx.warning(op.toExplainString() + "左辺の型[" + left.getCType().toString() + "]と右辺の型[" + right.getCType().toString() + "]は掛けられません");
 			}
 			this.setCType(CType.getCType(nt));
 			this.setConstant(left.isConstant() && right.isConstant());	// *の左右両方が定数のときだけ定数
@@ -153,7 +153,7 @@ class TermDiv extends CParseRule {
 			right = new Factor(pcx);
 			right.parse(pcx);
 		} else {
-			pcx.fatalError(tk.toExplainString() + "/の後ろはfactorです");
+			pcx.warning(tk.toExplainString() + "/の後ろはfactorです");
 		}
 	}
 
@@ -174,7 +174,7 @@ class TermDiv extends CParseRule {
 			int rt = right.getCType().getType();	// /の右辺の型
 			int nt = s[lt][rt];						// 規則による型計算
 			if (nt == CType.T_err) {
-				pcx.fatalError(op.toExplainString() + "左辺の型[" + left.getCType().toString() + "]と右辺の型[" + right.getCType().toString() + "]は割れません");
+				pcx.warning(op.toExplainString() + "左辺の型[" + left.getCType().toString() + "]と右辺の型[" + right.getCType().toString() + "]は割れません");
 			}
 			this.setCType(CType.getCType(nt));
 			this.setConstant(left.isConstant() && right.isConstant());	// /の左右両方が定数のときだけ定数

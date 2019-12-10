@@ -3,6 +3,7 @@ package lang.c.parse;
 import java.io.PrintStream;
 
 import lang.FatalErrorException;
+import lang.RecoverableErrorException;
 import lang.c.CParseContext;
 import lang.c.CParseRule;
 import lang.c.CToken;
@@ -28,11 +29,16 @@ public class ConditionNOT extends CParseRule {
 
 		if(tk.getType() == CToken.TK_NOT){
 			tk = ct.getNextToken(pcx);
-			if(ConditionTruth.isFirst(tk)){
-				condition = new ConditionTruth(pcx);
-				condition.parse(pcx);
-			} else {
-				pcx.fatalError("'!'のあとは'ConditionTruth'が来ます.");
+			try {
+				if(ConditionTruth.isFirst(tk)){
+					condition = new ConditionTruth(pcx);
+					condition.parse(pcx);
+				} else {
+					pcx.recoverableError(tk.toExplainString() + "'!'のあとは'ConditionTruth'が来ます.");
+				}
+			} catch (RecoverableErrorException e) {
+				ct.skipTo(pcx, CToken.TK_SEMI, CToken.TK_RCUR);
+				tk = ct.getNextToken(pcx);
 			}
 		}
 	}

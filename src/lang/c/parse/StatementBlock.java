@@ -39,7 +39,7 @@ public class StatementBlock extends CParseRule {
 		if (tk.getType() == CToken.TK_RCUR) {
 			ct.getNextToken(pcx);
 		} else {
-			pcx.fatalError(tk.toExplainString() + "'}'がありません.");
+			pcx.warning(tk.toExplainString() + "'}'が無いので補いました.");
 		}
 	}
 
