@@ -49,11 +49,15 @@ public class Program extends CParseRule {
 	}
 
 	public void semanticCheck(CParseContext pcx) throws FatalErrorException {
-		for (CParseRule decl : declList) {
-			if ( decl != null ) { decl.semanticCheck(pcx); }
-		}
-		for (CParseRule function : functionList) {
-			if (function != null) { function.semanticCheck(pcx); }
+		try {
+			for (CParseRule decl : declList) {
+				if ( decl != null ) { decl.semanticCheck(pcx); }
+			}
+			for (CParseRule function : functionList) {
+				if (function != null) { function.semanticCheck(pcx); }
+			}
+		} catch (NullPointerException e) {
+			throw(e);
 		}
 	}
 
